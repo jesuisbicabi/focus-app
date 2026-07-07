@@ -395,6 +395,18 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 .feel-word.oke{color:var(--feel-heavy)}
 .feel-word.trots{color:var(--accent-green)}
 
+/* ---------- sync-badge ---------- */
+.sync-badge{
+  position:fixed;top:calc(10px + env(safe-area-inset-top));
+  right:calc(max(0px, (100vw - 480px) / 2) + 14px);
+  width:11px;height:11px;border-radius:50%;background:#C7CCD6;z-index:90;
+  box-shadow:0 0 0 3px var(--bg-main);transition:background .2s;
+}
+.sync-badge.syncing{background:#E5A100;animation:pulse 1s ease-in-out infinite}
+.sync-badge.ok{background:var(--accent-green)}
+.sync-badge.offline{background:#FF6B6B;cursor:pointer}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
 /* ---------- bottom nav ---------- */
 .bottomnav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
@@ -435,6 +447,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 </head>
 <body>
 <div id="app">
+<div class="sync-badge idle" id="syncBadge" title="Nog niet gesynchroniseerd"></div>
 <main id="main">
 
 <!-- ========== 1a DAGSTART · ENERGIE ========== -->
@@ -923,6 +936,155 @@ function persistTasks(){ save("focusapp_tasks", tasks); }
 function persistNotes(){ save("focusapp_notes", notes); }
 function persistTimer(){ save("focusapp_timer", timer); }
 
+/* =====================================================
+   EXTERBRAIN SYNC (Google Sheets via Apps Script)
+   ===================================================== */
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzBMjCZRkhZKdLFylOR2cYJ_gsbaOLzh4nlPjwvLnhI2XYMRtWduv59GANzh1hy2tDWsg/exec';
+function sheetsReady(){ return !!SHEETS_URL; }
+
+const TIJDSDUUR_STEPS=[{max:5,label:"5 min"},{max:7.5,label:"7,5 min"},{max:15,label:"15 min"},
+  {max:30,label:"30 min"},{max:60,label:"1 uur"},{max:Infinity,label:"meer dan 1 uur"}];
+function minutesToTijdsduur(min){
+  if(min==null) return "";
+  const s=TIJDSDUUR_STEPS.find(s=>min<=s.max);
+  return s? s.label : "meer dan 1 uur";
+}
+function tijdsduurToMinutes(label){
+  const map={"5 min":5,"7,5 min":7.5,"15 min":15,"30 min":30,"1 uur":60,"meer dan 1 uur":90};
+  return Object.prototype.hasOwnProperty.call(map,label) ? map[label] : null;
+}
+function minutesToEnergy(min){
+  if(min==null) return "normal";
+  if(min<=15) return "easy";
+  if(min<=60) return "normal";
+  return "intense";
+}
+
+let syncQueue = load("focusapp_syncqueue", []);   // [{action,item|id,updates}]
+function persistSyncQueue(){ save("focusapp_syncqueue", syncQueue); }
+let syncState = "idle";  // idle | syncing | ok | offline
+function setSyncState(s){ syncState=s; renderSyncBadge(); }
+function renderSyncBadge(){
+  const el=$("#syncBadge"); if(!el) return;
+  el.className="sync-badge "+syncState;
+  el.title = syncState==="ok" ? "Gesynchroniseerd met Extern Brein"
+    : syncState==="syncing" ? "Synchroniseren…"
+    : syncState==="offline" ? (syncQueue.length+" wijziging(en) wachten op verbinding — tik om te proberen")
+    : "Nog niet gesynchroniseerd";
+}
+
+async function sheetPost(body){
+  try{
+    await fetch(SHEETS_URL, { method:"POST", mode:"no-cors", body: JSON.stringify(body) });
+    return true;
+  } catch(e){ return false; }
+}
+async function queueOrSend(body){
+  if(!sheetsReady()) return;
+  setSyncState("syncing");
+  const ok = await sheetPost(body);
+  if(!ok){ syncQueue.push(body); persistSyncQueue(); setSyncState("offline"); }
+  else setSyncState("ok");
+}
+async function flushSyncQueue(){
+  if(!syncQueue.length) return;
+  setSyncState("syncing");
+  const remaining=[];
+  for(const body of syncQueue){
+    const ok = await sheetPost(body);
+    if(!ok) remaining.push(body);
+  }
+  syncQueue=remaining; persistSyncQueue();
+  setSyncState(syncQueue.length? "offline":"ok");
+}
+
+/* ---- mapping: taak <-> sheet-item ---- */
+function taskToSheetItemFull(t){
+  return {
+    ID:t.id, Datum:(t.created||todayStr())+"T12:00:00",
+    Type:"taak", Inhoud:t.name, Categorie:t.category||"",
+    Tijdsduur:minutesToTijdsduur(t.minutes), Prioriteit:t.priority||"gemiddeld",
+    Status:t.done?"gedaan":"open", Goedgekeurd:"false",
+    Dag:t.day||"", Deadline:t.deadline||"",
+    Herhaling: JSON.stringify(t.repeat||{type:"once"}),
+    Microstappen: JSON.stringify(t.steps||[])
+  };
+}
+function taskToSheetUpdates(t){
+  return {
+    Inhoud:t.name, Tijdsduur:minutesToTijdsduur(t.minutes),
+    Status:t.done?"gedaan":"open", Dag:t.day||"", Deadline:t.deadline||"",
+    Herhaling: JSON.stringify(t.repeat||{type:"once"}),
+    Microstappen: JSON.stringify(t.steps||[])
+  };
+}
+function sheetItemToTask(row){
+  let repeat={type:"once"}, steps=[];
+  try{ if(row.Herhaling) repeat=JSON.parse(row.Herhaling); }catch(e){}
+  try{ if(row.Microstappen) steps=JSON.parse(row.Microstappen); }catch(e){}
+  const minutes=tijdsduurToMinutes(row.Tijdsduur);
+  return {
+    id:row.ID, created:(row.Datum||"").slice(0,10)||todayStr(), done:row.Status==="gedaan",
+    name:row.Inhoud||"", category:row.Categorie||"", priority:row.Prioriteit||"gemiddeld",
+    energy:minutesToEnergy(minutes), minutes,
+    day:row.Dag||null, deadline:row.Deadline||null, repeat, steps
+  };
+}
+function noteToSheetItemFull(n){
+  return {
+    ID:n.id, Datum:(n.created||todayStr())+"T12:00:00", Type:"notitie",
+    Inhoud:n.text, Categorie:n.cat||"", Tijdsduur:"", Prioriteit:"gemiddeld",
+    Status:"open", Goedgekeurd:"false", Dag:"", Deadline:"", Herhaling:"", Microstappen:""
+  };
+}
+function noteToSheetUpdates(n){ return { Inhoud:n.text, Categorie:n.cat||"" }; }
+function sheetItemToNote(row){
+  return { id:row.ID, text:row.Inhoud||"", cat:row.Categorie||"Persoonlijk", created:(row.Datum||"").slice(0,10)||todayStr() };
+}
+
+/* ---- push helpers (aangeroepen vanuit UI-acties) ---- */
+function pushTaskAdd(t){ queueOrSend({action:"add", item:taskToSheetItemFull(t)}); }
+function pushTaskUpdate(t){ queueOrSend({action:"update", id:t.id, updates:taskToSheetUpdates(t)}); }
+function pushTaskDelete(id){ queueOrSend({action:"delete", id}); }
+function pushNoteAdd(n){ queueOrSend({action:"add", item:noteToSheetItemFull(n)}); }
+function pushNoteUpdate(n){ queueOrSend({action:"update", id:n.id, updates:noteToSheetUpdates(n)}); }
+function pushNoteDelete(id){ queueOrSend({action:"delete", id}); }
+
+/* ---- ophalen + samenvoegen ----
+   Alleen Goedgekeurd:"true" items worden overgenomen — niet-goedgekeurde
+   concepten blijven in de Extern Brein Inbox staan totdat jij ze daar
+   goedkeurt (meteen_goedkeuren staat vanuit de focus-app altijd op false). */
+async function syncFromSheet(){
+  if(!sheetsReady()) return;
+  setSyncState("syncing");
+  try{
+    const r=await fetch(SHEETS_URL+"?action=getAll");
+    const rows=await r.json();
+    if(!Array.isArray(rows)){ setSyncState("offline"); return; }
+    let changed=false;
+    rows.forEach(row=>{
+      if(row.Goedgekeurd!=="true") return;
+      if(row.Type==="taak"){
+        const incoming=sheetItemToTask(row);
+        const local=tasks.find(x=>x.id===incoming.id);
+        if(local) Object.assign(local, incoming);
+        else { tasks.push(incoming); changed=true; }
+      } else if(row.Type==="notitie"){
+        const incoming=sheetItemToNote(row);
+        const local=notes.find(x=>x.id===incoming.id);
+        if(local) Object.assign(local, incoming);
+        else { notes.unshift(incoming); changed=true; }
+      }
+    });
+    persistTasks(); persistNotes();
+    setSyncState("ok");
+    if(changed && currentScreen==="screen-tasks") renderTasksTab();
+    if(changed && currentScreen==="screen-brain") renderBrain();
+    if(currentScreen==="screen-home") renderHome();
+    await flushSyncQueue();
+  } catch(e){ setSyncState("offline"); }
+}
+
 /* nieuwe dag? → dagstate resetten (taken & notities blijven) */
 function checkNewDay(){
   const t = todayStr();
@@ -1036,7 +1198,7 @@ function maybeReaskEnergy(){
     renderEnergyScreen(true); setTab("start"); showScreen("screen-energy");
   }
 }
-document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ checkNewDay(); maybeReaskEnergy(); tickTimer(); } });
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ checkNewDay(); maybeReaskEnergy(); tickTimer(); syncFromSheet(); } });
 
 /* ---------- taak-kandidaten & scoring ---------- */
 function openTasks(){
@@ -1314,6 +1476,7 @@ function taskItemEl(t,isToday){
       day.todayTasks=day.todayTasks.filter(id=>id!==t.id);
       persistTasks(); persistDay(); renderTasksTab();
       toast("Taak verwijderd");
+      pushTaskDelete(t.id);
     }
   });
   div.querySelector('[data-a="done"]').addEventListener("click",()=>{ completeTask(t.id,0); renderTasksTab(); });
@@ -1330,8 +1493,10 @@ function parkedEl(p,context){
   if(context==="brain"){
     const nt=document.createElement("button"); nt.textContent="Bewaar als notitie";
     nt.addEventListener("click",()=>{
-      notes.unshift({id:uid(),text:p.tekst,cat:"Persoonlijk",created:todayStr()});
+      const newNote={id:uid(),text:p.tekst,cat:"Persoonlijk",created:todayStr()};
+      notes.unshift(newNote);
       persistNotes(); removeParked(p.id); renderBrain(); toast("Bewaard als notitie");
+      pushNoteAdd(newNote);
     });
     row.appendChild(nt);
   }
@@ -1395,6 +1560,7 @@ function completeTask(id, extraFocusSec){
     t.done=true; t.doneAt=todayStr();
   }
   persistTasks(); persistDay();
+  pushTaskUpdate(t);
 }
 
 /* =====================================================
@@ -1616,11 +1782,13 @@ $("#wizSave").addEventListener("click",()=>{
     deadline:resolveDate(wiz.dead,wiz.deadDate),
     repeat:buildRepeat(), steps:wiz.steps.map(s=>({text:s.text,done:!!s.done}))
   };
+  let savedTask=null;
   if(wiz.editId){
     const t=tasks.find(x=>x.id===wiz.editId);
-    if(t) Object.assign(t,data);
+    if(t){ Object.assign(t,data); savedTask=t; }
   } else {
-    tasks.push(Object.assign({id:uid(),created:todayStr(),done:false},data));
+    savedTask=Object.assign({id:uid(),created:todayStr(),done:false},data);
+    tasks.push(savedTask);
   }
   persistTasks();
   closeWizard();
@@ -1629,6 +1797,7 @@ $("#wizSave").addEventListener("click",()=>{
     if(currentScreen==="screen-home") renderHome();
   });
   toast(wiz.editId? "Taak bijgewerkt":"Taak opgeslagen ✓");
+  if(savedTask){ wiz.editId ? pushTaskUpdate(savedTask) : pushTaskAdd(savedTask); }
 });
 
 /* snelle invoer → wizard */
@@ -1692,7 +1861,7 @@ function noteEl(n){
     +'<button class="icon-btn" data-a="task" title="Maak taak">☑️</button></div>';
   div.querySelector(".prev").addEventListener("click",()=>div.classList.toggle("collapsed"));
   div.querySelector('[data-a="del"]').addEventListener("click",()=>{
-    if(confirm("Notitie verwijderen?")){ notes=notes.filter(x=>x.id!==n.id); persistNotes(); renderBrain(); toast("Notitie verwijderd"); }
+    if(confirm("Notitie verwijderen?")){ notes=notes.filter(x=>x.id!==n.id); persistNotes(); renderBrain(); toast("Notitie verwijderd"); pushNoteDelete(n.id); }
   });
   div.querySelector('[data-a="task"]').addEventListener("click",()=>openWizard({name:n.text.slice(0,120)}));
   div.querySelector('[data-a="edit"]').addEventListener("click",()=>{
@@ -1705,7 +1874,7 @@ function noteEl(n){
     const row=document.createElement("div"); row.className="row"; row.style.cssText="display:flex;gap:8px;margin-top:9px";
     const ok=document.createElement("button"); ok.className="btn btn-blue"; ok.textContent="Opslaan"; ok.style.minHeight="42px";
     const cancel=document.createElement("button"); cancel.className="btn btn-ghost"; cancel.textContent="Annuleer"; cancel.style.minHeight="42px";
-    ok.addEventListener("click",()=>{ n.text=ta.value.trim()||n.text; n.cat=selCat.value; persistNotes(); renderBrain(); toast("Notitie bijgewerkt"); });
+    ok.addEventListener("click",()=>{ n.text=ta.value.trim()||n.text; n.cat=selCat.value; persistNotes(); renderBrain(); toast("Notitie bijgewerkt"); pushNoteUpdate(n); });
     cancel.addEventListener("click",renderBrain);
     row.appendChild(ok); row.appendChild(cancel);
     div.appendChild(ta); div.appendChild(selCat); div.appendChild(row);
@@ -1717,10 +1886,12 @@ $("#brainSearch").addEventListener("input",()=>{ brainQuery=$("#brainSearch").va
 function brainAdd(){
   const v=$("#brainQuickAdd").value.trim();
   if(!v) return;
-  notes.unshift({id:uid(),text:v,cat:$("#brainCatSelect").value,created:todayStr()});
+  const n={id:uid(),text:v,cat:$("#brainCatSelect").value,created:todayStr()};
+  notes.unshift(n);
   persistNotes();
   $("#brainQuickAdd").value="";
   renderBrain(); toast("Onthouden ✓");
+  pushNoteAdd(n);
 }
 $("#brainQuickAddBtn").addEventListener("click",brainAdd);
 $("#brainQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter") brainAdd(); });
@@ -1965,7 +2136,9 @@ function init(){
   setTab("start");
   gotoStart();
   maybeReaskEnergy();
+  syncFromSheet();
 }
+$("#syncBadge").addEventListener("click",()=>{ if(syncState==="offline") flushSyncQueue(); });
 init();
 </script>
 </body>
