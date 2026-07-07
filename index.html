@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F0F2F7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Focus App</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%2334C759'/><circle cx='50' cy='50' r='28' fill='%23F0F2F7'/></svg>">
+<link rel="manifest" href='data:application/manifest+json,{"name":"Focus App","short_name":"Focus","display":"standalone","background_color":"%23F0F2F7","theme_color":"%23F0F2F7","start_url":"."}'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-main:#F0F2F7;
+  --bg-card:#FFFFFF;
+  --bg-card-accent:#F7F9FC;
+  --energy-easy:#34C759;
+  --energy-normal:#3478F6;
+  --energy-intense:#8B5CF6;
+  --accent-green:#34C759;
+  --accent-blue:#3478F6;
+  --accent-focus-green:#30D158;
+  --text-primary:#1A2332;
+  --text-secondary:#8E8E93;
+  --text-on-dark:#FFFFFF;
+  --text-label:#6B7280;
+  --feel-heavy:#FF6B9D;
+  --feel-ok:#9CA3AF;
+  --feel-proud:#60A5FA;
+  --radius-card:18px;
+  --radius-btn:13px;
+  --shadow-card:0 2px 10px rgba(26,35,50,.06),0 1px 3px rgba(26,35,50,.05);
+  --shadow-pop:0 10px 30px rgba(26,35,50,.14);
+  --font-head:'Outfit',sans-serif;
+  --font-body:'Nunito',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{
+  font-family:var(--font-body);
+  background:var(--bg-main);
+  color:var(--text-primary);
+  min-height:100vh;
+  min-height:100dvh;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+#app{
+  max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;
+  display:flex;flex-direction:column;position:relative;
+}
+main{flex:1;padding:20px 18px 92px;display:flex;flex-direction:column}
+h1,h2,h3,.btn,.tab-label{font-family:var(--font-head)}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:var(--font-body);font-size:1rem;color:var(--text-primary)}
+input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1px}
+
+/* ---------- generieke bouwstenen ---------- */
+.screen{display:none;animation:fadeIn .28s ease both;flex-direction:column;flex:1}
+.screen.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.label{
+  font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--text-label);font-weight:700;font-family:var(--font-head);
+}
+.card{
+  background:var(--bg-card);border-radius:var(--radius-card);
+  box-shadow:var(--shadow-card);padding:18px;
+}
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  min-height:48px;border-radius:var(--radius-btn);font-weight:700;
+  font-size:1.02rem;padding:12px 20px;transition:transform .12s ease,box-shadow .12s ease,opacity .12s;
+  width:100%;
+}
+.btn:active{transform:scale(.975)}
+.btn-green{background:var(--accent-focus-green);color:#fff;box-shadow:0 4px 14px rgba(48,209,88,.32)}
+.btn-blue{background:var(--accent-blue);color:#fff;box-shadow:0 4px 14px rgba(52,120,246,.28)}
+.btn-ghost{background:var(--bg-card-accent);color:var(--text-primary);border:1.5px solid #E4E8F0}
+.btn-link{background:none;color:var(--text-secondary);font-weight:600;min-height:auto;padding:8px;width:auto;font-size:.95rem}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.screen-header{margin-bottom:14px}
+.screen-header h2{font-size:1.5rem;font-weight:700;letter-spacing:-.01em}
+.screen-header p{color:var(--text-secondary);margin-top:3px;font-size:.95rem}
+.divider{height:1px;background:#E7EAF1;margin:16px 0}
+.pill{
+  display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:700;
+  padding:5px 11px;border-radius:999px;background:var(--bg-card-accent);
+  font-family:var(--font-head);
+}
+.pill-easy{background:rgba(52,199,89,.13);color:#1E8E3E}
+.pill-normal{background:rgba(52,120,246,.12);color:#2361D2}
+.pill-intense{background:rgba(139,92,246,.13);color:#6D3FD6}
+
+/* ---------- sfeerbol ---------- */
+.orb-wrap{display:flex;justify-content:center;margin:22px 0 26px}
+.orb{position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center}
+.orb span{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%,#FFE3A8,#FFB65C 62%,#FF9E4A);
+  animation:orbPulse 3.4s ease-in-out infinite;
+}
+.orb span:nth-child(1){width:150px;height:150px;opacity:.18;animation-delay:0s}
+.orb span:nth-child(2){width:112px;height:112px;opacity:.35;animation-delay:.35s}
+.orb span:nth-child(3){width:76px;height:76px;opacity:.95;animation-delay:.7s}
+@keyframes orbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.orb.orb-heavy span{background:radial-gradient(circle at 38% 32%,#D7DBE2,#AEB4BF 62%,#9CA3AF)}
+.orb.orb-ok span{background:radial-gradient(circle at 38% 32%,#FFD1E3,#FF8FB8 62%,#FF6B9D)}
+.orb.orb-proud span{background:radial-gradient(circle at 38% 32%,#C8F5D4,#6FDD90 62%,#34C759)}
+
+/* ---------- dagstart ---------- */
+.greeting{font-size:1.65rem;font-weight:800;font-family:var(--font-head);letter-spacing:-.01em}
+.greeting-sub{color:var(--text-secondary);margin-top:2px;font-size:.95rem}
+.energy-choices{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.energy-choice{
+  display:flex;align-items:center;gap:14px;background:var(--bg-card);
+  border:2px solid transparent;border-radius:var(--radius-card);
+  padding:16px 18px;box-shadow:var(--shadow-card);text-align:left;
+  transition:border-color .15s,transform .12s;
+}
+.energy-choice:active{transform:scale(.98)}
+.energy-choice .ico{font-size:1.6rem;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--bg-card-accent)}
+.energy-choice .tt{font-weight:800;font-family:var(--font-head);font-size:1.05rem}
+.energy-choice .ss{color:var(--text-secondary);font-size:.85rem}
+.energy-choice.selected{border-color:var(--accent-blue);background:#F3F7FF}
+.energy-choice[data-level="laag"].selected{border-color:var(--energy-easy);background:#F1FBF3}
+.energy-choice[data-level="hoog"].selected{border-color:var(--energy-intense);background:#F7F3FF}
+.note-field{
+  width:100%;margin-top:14px;background:var(--bg-card);border:1.5px solid #E4E8F0;
+  border-radius:var(--radius-btn);padding:12px 14px;resize:none;min-height:64px;
+}
+.choose-cards{display:flex;flex-direction:column;gap:14px;margin-top:8px}
+.choose-card{
+  text-align:left;background:var(--bg-card);border:2px solid transparent;
+  border-radius:var(--radius-card);padding:20px;box-shadow:var(--shadow-card);
+  transition:border-color .15s,transform .12s;
+}
+.choose-card:active{transform:scale(.98)}
+.choose-card.selected{border-color:var(--accent-blue);background:#F3F7FF}
+.choose-card .ico{font-size:1.5rem}
+.choose-card h3{font-size:1.1rem;margin:6px 0 3px}
+.choose-card p{color:var(--text-secondary);font-size:.88rem}
+
+/* ---------- swipe kiezer ---------- */
+.swipe-stage{flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;min-height:300px}
+.swipe-card{
+  background:var(--bg-card);border-radius:22px;box-shadow:var(--shadow-pop);
+  padding:26px 22px;text-align:center;position:relative;touch-action:pan-y;
+  transition:transform .25s ease,opacity .25s ease;
+}
+.swipe-card.fly-right{transform:translateX(130%) rotate(9deg);opacity:0}
+.swipe-card.fly-left{transform:translateX(-130%) rotate(-9deg);opacity:0}
+.swipe-card h3{font-size:1.3rem;margin:10px 0 6px}
+.swipe-card .meta{color:var(--text-secondary);font-size:.9rem}
+.swipe-hint{text-align:center;color:var(--text-secondary);font-size:.85rem;margin-top:14px}
+.swipe-actions{display:flex;gap:12px;margin-top:18px}
+.swipe-count{text-align:center;margin-bottom:10px}
+
+/* ---------- hoofdscherm ---------- */
+.home-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.energy-badge{
+  font-family:var(--font-head);font-weight:700;font-size:.78rem;
+  padding:6px 12px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;
+  background:var(--bg-card);box-shadow:var(--shadow-card);white-space:nowrap;
+}
+.progress-block{margin:20px 0 14px}
+.progress-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.progress-bar{height:8px;background:#E2E7F0;border-radius:999px;overflow:hidden}
+.progress-bar i{display:block;height:100%;background:var(--accent-blue);border-radius:999px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.task-card{
+  background:var(--bg-card);border-radius:20px;box-shadow:var(--shadow-card);
+  padding:20px;border-left:5px solid var(--energy-normal);
+}
+.task-card .now-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.task-card .now{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-head);font-weight:700;font-size:.8rem;color:#1E8E3E}
+.task-card .now .dot{width:9px;height:9px;border-radius:50%;background:var(--accent-green);animation:orbPulse 2s infinite}
+.task-card h3{font-size:1.45rem;font-weight:800;letter-spacing:-.01em;line-height:1.25;overflow-wrap:anywhere}
+.task-card .tmeta{color:var(--text-secondary);font-size:.88rem;margin-top:4px}
+.steps-toggle{
+  display:flex;align-items:center;gap:6px;margin-top:14px;color:var(--text-label);
+  font-weight:700;font-size:.85rem;font-family:var(--font-head);padding:4px 0;
+}
+.steps-toggle .chev{transition:transform .2s}
+.steps-toggle.open .chev{transform:rotate(90deg)}
+.steps-list{display:none;margin-top:8px}
+.steps-list.open{display:block}
+.step-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #F0F2F7}
+.step-row:last-child{border-bottom:none}
+.step-row input[type=checkbox]{width:21px;height:21px;accent-color:var(--accent-green);margin-top:1px;flex:none}
+.step-row .txt{flex:1;font-size:.95rem;line-height:1.4;overflow-wrap:anywhere}
+.step-row.done .txt{color:var(--text-secondary);text-decoration:line-through}
+.add-inline{display:flex;gap:8px;margin-top:16px}
+.add-inline input{
+  flex:1;background:var(--bg-card);border:1.5px solid #E4E8F0;border-radius:var(--radius-btn);
+  padding:12px 14px;min-height:48px;
+}
+.add-inline button{
+  flex:none;width:48px;height:48px;border-radius:var(--radius-btn);
+  background:var(--accent-blue);color:#fff;font-size:1.3rem;font-weight:700;
+}
+.alldone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 0}
+.alldone .big-check{
+  width:96px;height:96px;border-radius:50%;background:var(--accent-green);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:3rem;
+  box-shadow:0 8px 26px rgba(52,199,89,.35);animation:popIn .5s cubic-bezier(.2,1.4,.4,1) both;
+}
+@keyframes popIn{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+.alldone h3{font-size:1.4rem;margin:18px 0 22px}
+.alldone .btn{margin-top:10px}
+
+/* ---------- taken tab ---------- */
+.today-chip{font-size:.85rem;color:var(--text-secondary)}
+.today-chip a{color:var(--accent-blue);font-weight:700;text-decoration:none}
+.task-group-title{margin:20px 0 8px;display:flex;align-items:center;gap:7px}
+.task-item{
+  background:var(--bg-card);border-radius:var(--radius-card);box-shadow:var(--shadow-card);
+  padding:13px 14px;display:flex;align-items:center;gap:10px;margin-bottom:10px;
+  border-left:4px solid var(--energy-normal);
+}
+.task-item .info{flex:1;min-width:0}
+.task-item .name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-item .sub{color:var(--text-secondary);font-size:.8rem;margin-top:2px}
+.icon-btn{
+  width:38px;height:38px;flex:none;border-radius:10px;background:var(--bg-card-accent);
+  display:flex;align-items:center;justify-content:center;font-size:1rem;
+  transition:transform .1s;
+}
+.icon-btn:active{transform:scale(.9)}
+.task-item .btns{display:flex;gap:6px}
+.parked-item{
+  background:#FFF9EC;border:1px solid #F5E5BD;border-radius:var(--radius-card);
+  padding:12px 14px;margin-bottom:9px;
+}
+.parked-item .txt{font-size:.95rem;overflow-wrap:anywhere}
+.parked-item .row{display:flex;gap:8px;margin-top:9px}
+.parked-item .row button{
+  font-size:.82rem;font-weight:700;font-family:var(--font-head);
+  padding:7px 12px;border-radius:9px;background:#fff;border:1px solid #EADFC4;
+}
+.empty-note{color:var(--text-secondary);font-size:.92rem;padding:10px 2px}
+
+/* ---------- wizard (bottom sheet) ---------- */
+.sheet-backdrop{
+  position:fixed;inset:0;background:rgba(26,35,50,.42);z-index:60;
+  display:none;align-items:flex-end;justify-content:center;
+  animation:fadeIn .2s ease both;
+}
+.sheet-backdrop.open{display:flex}
+.sheet{
+  background:var(--bg-main);width:100%;max-width:480px;border-radius:24px 24px 0 0;
+  padding:18px 18px calc(18px + env(safe-area-inset-bottom));max-height:92vh;max-height:92dvh;overflow-y:auto;
+  animation:slideUp .3s cubic-bezier(.2,.9,.3,1) both;
+}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+.sheet-handle{width:42px;height:5px;border-radius:99px;background:#D4D9E3;margin:0 auto 14px}
+.wiz-step{display:none}
+.wiz-step.active{display:block;animation:fadeIn .22s ease both}
+.wiz-title{font-size:1.25rem;font-weight:800;font-family:var(--font-head)}
+.wiz-sub{color:var(--text-secondary);font-size:.9rem;margin:2px 0 14px}
+.wiz-input{
+  width:100%;background:var(--bg-card);border:1.5px solid #E4E8F0;border-radius:var(--radius-btn);
+  padding:13px 15px;font-size:1.05rem;min-height:50px;
+}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+.opt-btn{
+  background:var(--bg-card);border:2px solid #E4E8F0;border-radius:var(--radius-btn);
+  padding:13px 10px;font-weight:700;font-family:var(--font-head);font-size:.92rem;
+  min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  transition:border-color .12s,background .12s;text-align:center;
+}
+.opt-btn small{font-weight:600;font-family:var(--font-body);color:var(--text-secondary);font-size:.74rem}
+.opt-btn.selected{border-color:var(--accent-blue);background:#F3F7FF}
+.opt-btn.sel-easy.selected{border-color:var(--energy-easy);background:#F1FBF3}
+.opt-btn.sel-intense.selected{border-color:var(--energy-intense);background:#F7F3FF}
+.opt-btn.dashed{border-style:dashed}
+.wiz-nav{display:flex;gap:10px;margin-top:18px;align-items:center}
+.wiz-nav .btn{flex:1}
+.wiz-nav .back{flex:none;width:auto}
+.wiz-section{margin-bottom:16px}
+.wiz-section .label{display:block;margin-bottom:8px}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  background:var(--bg-card);border:1.5px solid #E4E8F0;border-radius:999px;
+  padding:9px 15px;font-weight:700;font-family:var(--font-head);font-size:.86rem;min-height:40px;
+  transition:border-color .12s,background .12s;
+}
+.chip.selected{border-color:var(--accent-blue);background:#F3F7FF;color:#2361D2}
+.chip.sm{padding:7px 12px;min-height:36px;font-size:.82rem}
+.inline-field{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.num-input{
+  width:76px;background:var(--bg-card);border:1.5px solid #E4E8F0;border-radius:11px;
+  padding:10px;text-align:center;font-size:1.05rem;font-weight:700;min-height:46px;
+}
+.date-input,.sel-input{
+  background:var(--bg-card);border:1.5px solid #E4E8F0;border-radius:11px;
+  padding:10px 12px;min-height:46px;font-size:.95rem;
+}
+.slider-row{display:flex;align-items:center;gap:12px;margin-top:12px}
+.slider-row input[type=range]{flex:1;accent-color:var(--accent-blue);height:34px}
+.micro-list{margin:8px 0}
+.micro-item{display:flex;align-items:center;gap:9px;background:var(--bg-card);border-radius:11px;padding:9px 12px;margin-bottom:8px;box-shadow:var(--shadow-card)}
+.micro-item .n{font-family:var(--font-head);font-weight:800;color:var(--accent-blue);flex:none}
+.micro-item .t{flex:1;font-size:.95rem;overflow-wrap:anywhere}
+.summary-tags{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.summary-tags .pill{font-size:.84rem;padding:8px 13px}
+
+/* ---------- brein ---------- */
+.search-bar{
+  display:flex;align-items:center;gap:9px;background:var(--bg-card);
+  border-radius:var(--radius-btn);padding:0 14px;box-shadow:var(--shadow-card);margin-bottom:14px;
+}
+.search-bar input{flex:1;border:none;background:none;min-height:48px}
+.search-bar input:focus{outline:none}
+.note-cat{margin:18px 0 8px}
+.note-item{
+  background:var(--bg-card);border-radius:var(--radius-card);box-shadow:var(--shadow-card);
+  padding:13px 14px;margin-bottom:10px;
+}
+.note-item .prev{font-size:.95rem;line-height:1.45;overflow-wrap:anywhere}
+.note-item.collapsed .prev{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.note-item .date{color:var(--text-secondary);font-size:.76rem;margin-top:6px}
+.note-item .btns{display:flex;gap:6px;margin-top:9px}
+.brain-add{position:sticky;bottom:96px;margin-top:16px}
+.brain-add .add-inline input{box-shadow:var(--shadow-card)}
+.cat-select{width:100%;margin-top:8px}
+
+/* ---------- focus ---------- */
+.focus-wrap{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center}
+.focus-tasknum{font-family:var(--font-head);font-weight:800;font-size:2.4rem;color:#D7DCE6;line-height:1}
+.focus-taskname{font-size:1.5rem;font-weight:800;font-family:var(--font-head);margin:6px 0 2px;overflow-wrap:anywhere}
+.mood-word{color:var(--text-secondary);font-weight:700;font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;font-size:.8rem}
+.timer-ring{position:relative;width:210px;height:210px;margin:22px auto}
+.timer-ring svg{transform:rotate(-90deg)}
+.timer-ring .track{stroke:#E2E7F0}
+.timer-ring .prog{stroke:var(--accent-focus-green);transition:stroke-dashoffset .9s linear}
+.timer-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.timer-time{font-family:var(--font-head);font-weight:800;font-size:2.6rem;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.timer-of{font-size:.72rem;letter-spacing:.14em;color:var(--text-label);font-weight:700;margin-top:2px}
+.paused-badge{
+  position:absolute;top:12px;right:14px;background:#FFF3D6;color:#9A6B00;
+  font-family:var(--font-head);font-weight:800;font-size:.72rem;letter-spacing:.12em;
+  padding:6px 11px;border-radius:999px;display:none;
+}
+.paused-badge.show{display:block}
+.focus-zone{width:100%;text-align:left;margin-top:6px}
+.zone-steps{background:var(--bg-card);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:14px 16px;margin-bottom:14px}
+.zone-steps .step-row.current{border-left:3px solid var(--energy-intense);padding-left:9px;margin-left:-12px;background:#FBF9FF;border-radius:6px}
+.mini-progress{display:flex;gap:4px;margin-top:10px;align-items:center}
+.mini-progress i{height:5px;flex:1;border-radius:99px;background:#E2E7F0}
+.mini-progress i.done{background:var(--accent-green)}
+.mini-progress .lbl{flex:none;font-size:.76rem;color:var(--text-secondary);margin-left:6px}
+.zone-complete{margin-bottom:14px}
+.zone-park{
+  background:var(--bg-card);border-radius:var(--radius-card);box-shadow:var(--shadow-card);
+  padding:12px 14px;margin-bottom:100px;
+}
+.zone-park .row{display:flex;gap:8px;align-items:center}
+.zone-park input{flex:1;border:1.5px solid #E4E8F0;border-radius:11px;padding:11px 13px;min-height:46px;background:var(--bg-card)}
+.zone-park .btn-blue{width:auto;flex:none;min-height:46px;padding:10px 16px}
+.timer-controls{
+  position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;background:rgba(240,242,247,.94);backdrop-filter:blur(8px);
+  display:flex;gap:10px;padding:10px 18px calc(10px + env(safe-area-inset-bottom)*0);
+  border-top:1px solid #E4E8F0;z-index:40;
+}
+.timer-controls .btn{min-height:46px;font-size:.92rem;padding:10px}
+
+/* ---------- dagafsluiting ---------- */
+.done-list{margin-top:8px}
+.done-item{
+  display:flex;align-items:center;gap:11px;background:var(--bg-card);
+  border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:13px 15px;margin-bottom:10px;
+}
+.done-item .chk{width:30px;height:30px;flex:none;border-radius:50%;background:rgba(52,199,89,.14);color:#1E8E3E;display:flex;align-items:center;justify-content:center;font-weight:800}
+.done-item .nm{flex:1;font-weight:700;overflow-wrap:anywhere}
+.done-item .tm{color:var(--text-secondary);font-size:.82rem;font-variant-numeric:tabular-nums}
+.feel-row{display:flex;gap:12px;justify-content:center;margin:26px 0}
+.feel-choice{display:flex;flex-direction:column;align-items:center;gap:9px;padding:8px;border-radius:16px;border:2px solid transparent;transition:border-color .15s}
+.feel-choice .ball{width:74px;height:74px;border-radius:50%;box-shadow:var(--shadow-card);transition:transform .15s}
+.feel-choice:active .ball{transform:scale(.92)}
+.feel-choice.selected{border-color:var(--accent-blue)}
+.feel-choice .nm{font-weight:700;font-family:var(--font-head);font-size:.88rem}
+.ball-heavy{background:radial-gradient(circle at 36% 30%,#D7DBE2,#9CA3AF)}
+.ball-ok{background:radial-gradient(circle at 36% 30%,#FFD1E3,#FF6B9D)}
+.ball-proud{background:radial-gradient(circle at 36% 30%,#C8F5D4,#34C759)}
+.close-final{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.close-final h3{font-size:1.5rem;margin-bottom:8px}
+.feel-word{font-weight:800}
+.feel-word.zwaar{color:var(--feel-ok)}
+.feel-word.oke{color:var(--feel-heavy)}
+.feel-word.trots{color:var(--accent-green)}
+
+/* ---------- bottom nav ---------- */
+.bottomnav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;height:60px;background:var(--bg-card);
+  border-top:1px solid #E7EAF1;display:flex;z-index:50;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  color:var(--text-secondary);transition:color .15s;
+}
+.tab .ico{font-size:1.25rem;line-height:1}
+.tab-label{font-size:.66rem;font-weight:700;letter-spacing:.02em}
+.tab.active{color:var(--accent-blue)}
+
+/* ---------- toast & vinkje-overlay ---------- */
+.toast{
+  position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#1A2332;color:#fff;padding:11px 18px;border-radius:12px;
+  font-weight:700;font-family:var(--font-head);font-size:.9rem;opacity:0;
+  transition:opacity .25s,transform .25s;z-index:80;pointer-events:none;
+  max-width:88%;text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.check-overlay{
+  position:fixed;inset:0;background:rgba(240,242,247,.92);z-index:70;
+  display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+}
+.check-overlay.show{display:flex;animation:fadeIn .2s both}
+.check-overlay .big-check{
+  width:104px;height:104px;border-radius:50%;background:var(--accent-green);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:3.2rem;
+  box-shadow:0 10px 30px rgba(52,199,89,.4);animation:popIn .5s cubic-bezier(.2,1.4,.4,1) both;
+}
+.check-overlay h3{font-size:1.4rem;margin:16px 0 4px;font-family:var(--font-head)}
+.check-overlay p{color:var(--text-secondary)}
+</style>
+</head>
+<body>
+<div id="app">
+<main id="main">
+
+<!-- ========== 1a DAGSTART · ENERGIE ========== -->
+<section class="screen" id="screen-energy">
+  <div class="screen-header">
+    <div class="greeting" id="energyGreeting">Goedemorgen, bi</div>
+    <div class="greeting-sub" id="energyDate"></div>
+  </div>
+  <div class="orb-wrap"><div class="orb"><span></span><span></span><span></span></div></div>
+  <h2 style="text-align:center;font-size:1.35rem;margin-bottom:16px">Hoe is je energie?</h2>
+  <div class="energy-choices">
+    <button class="energy-choice" data-level="laag">
+      <span class="ico">🪫</span>
+      <span><span class="tt">Laag</span><br><span class="ss">Rustig aan vandaag</span></span>
+    </button>
+    <button class="energy-choice" data-level="normaal">
+      <span class="ico">🔋</span>
+      <span><span class="tt">Normaal</span><br><span class="ss">Gewoon aan de slag</span></span>
+    </button>
+    <button class="energy-choice" data-level="hoog">
+      <span class="ico">⚡</span>
+      <span><span class="tt">Hoog</span><br><span class="ss">Volle batterij</span></span>
+    </button>
+  </div>
+  <textarea class="note-field" id="energyNote" placeholder="Korte toelichting (optioneel)…"></textarea>
+  <div class="wiz-nav">
+    <button class="btn btn-blue" id="energyNext" disabled>Verder →</button>
+  </div>
+</section>
+
+<!-- ========== 1b WIE KIEST DE TAKEN ========== -->
+<section class="screen" id="screen-choose">
+  <div class="screen-header">
+    <h2>Wie kiest je taken?</h2>
+    <p>Laat de app voor je denken, of kies zelf?</p>
+  </div>
+  <div class="choose-cards">
+    <button class="choose-card" id="chooseApp">
+      <span class="ico">✨</span>
+      <h3>App kiest</h3>
+      <p id="chooseAppSub">Past bij je energie</p>
+    </button>
+    <button class="choose-card" id="chooseSelf">
+      <span class="ico">📋</span>
+      <h3>Ik kies zelf</h3>
+      <p>Swipe per taak</p>
+    </button>
+  </div>
+</section>
+
+<!-- ========== 1b2 SWIPE-KIEZER ========== -->
+<section class="screen" id="screen-swipe">
+  <div class="screen-header">
+    <h2>Kies je taken</h2>
+    <p>Rechts = vandaag · links = niet vandaag</p>
+  </div>
+  <div class="swipe-count"><span class="label" id="swipeCount">0 VAN 3 GEKOZEN</span></div>
+  <div class="swipe-stage" id="swipeStage"></div>
+  <div class="swipe-actions">
+    <button class="btn btn-ghost" id="swipeLeft">✕ Niet vandaag</button>
+    <button class="btn btn-green" id="swipeRight">✓ Vandaag</button>
+  </div>
+  <div class="swipe-hint">Je kunt de kaart ook wegvegen</div>
+  <button class="btn-link" id="swipeDone" style="align-self:center;margin-top:6px">Klaar met kiezen</button>
+</section>
+
+<!-- ========== 1c HOOFDSCHERM ========== -->
+<section class="screen" id="screen-home">
+  <div class="home-top">
+    <div>
+      <div class="greeting" id="homeGreeting">Goedemorgen, bi</div>
+      <div class="greeting-sub" id="homeDate"></div>
+    </div>
+    <button class="energy-badge" id="homeEnergyBadge" title="Energie aanpassen">🔋 Normaal</button>
+  </div>
+  <div class="progress-block">
+    <div class="progress-row">
+      <span class="label" id="homeProgressLabel">VANDAAG · 0 VAN 3</span>
+      <span class="label" id="homeTimeLabel">0M VAN 0M</span>
+    </div>
+    <div class="progress-bar"><i id="homeProgressFill" style="width:0%"></i></div>
+  </div>
+  <div id="homeTaskArea"></div>
+  <div class="add-inline" style="margin-top:auto;padding-top:18px">
+    <input type="text" id="homeQuickAdd" placeholder="Nieuwe taak toevoegen…">
+    <button id="homeQuickAddBtn" aria-label="Taak toevoegen">＋</button>
+  </div>
+</section>
+
+<!-- ========== 2 TAKEN ========== -->
+<section class="screen" id="screen-tasks">
+  <div class="screen-header">
+    <h2>Taken</h2>
+    <p>Maximaal 3. De rest bestaat even niet.</p>
+  </div>
+  <div id="tasksTodayBlock"></div>
+  <div id="tasksParkedBlock"></div>
+  <div id="tasksAllBlock"></div>
+  <div class="add-inline" style="margin-top:18px">
+    <input type="text" id="tasksQuickAdd" placeholder="Nieuwe taak toevoegen…">
+    <button id="tasksQuickAddBtn" aria-label="Taak toevoegen">＋</button>
+  </div>
+</section>
+
+<!-- ========== 3 BREIN ========== -->
+<section class="screen" id="screen-brain">
+  <div class="screen-header">
+    <h2>Brein</h2>
+    <p>Alles wat je wilt onthouden</p>
+  </div>
+  <div class="search-bar">🔍<input type="text" id="brainSearch" placeholder="Zoeken in je brein…"></div>
+  <div id="brainParkedBlock"></div>
+  <div id="brainNotesBlock"></div>
+  <div class="brain-add">
+    <div class="add-inline">
+      <input type="text" id="brainQuickAdd" placeholder="Iets onthouden…">
+      <button id="brainQuickAddBtn" aria-label="Notitie toevoegen">＋</button>
+    </div>
+    <select class="sel-input cat-select" id="brainCatSelect">
+      <option value="Persoonlijk">Categorie: Persoonlijk</option>
+      <option value="Werk">Categorie: Werk</option>
+      <option value="Computer & tech">Categorie: Computer &amp; tech</option>
+      <option value="Financiën">Categorie: Financiën</option>
+      <option value="Fotografie">Categorie: Fotografie</option>
+      <option value="Joa">Categorie: Joa</option>
+      <option value="Huishouden">Categorie: Huishouden</option>
+      <option value="verzekering">Categorie: verzekering</option>
+      <option value="films & series">Categorie: films &amp; series</option>
+    </select>
+  </div>
+</section>
+
+<!-- ========== 4a FOCUS INTRO ========== -->
+<section class="screen" id="screen-focus-intro">
+  <div class="focus-wrap">
+    <div class="focus-tasknum" id="fiNum">1</div>
+    <div class="label">NU AAN ZET</div>
+    <div class="focus-taskname" id="fiName">Taak</div>
+    <div class="mood-word" id="fiMood">Gestaag</div>
+    <div class="timer-ring">
+      <svg width="210" height="210" viewBox="0 0 210 210">
+        <circle class="track" cx="105" cy="105" r="94" fill="none" stroke-width="12"/>
+        <circle class="prog" cx="105" cy="105" r="94" fill="none" stroke-width="12" stroke-linecap="round" style="stroke-dasharray:590.6;stroke-dashoffset:0"/>
+      </svg>
+      <div class="timer-center">
+        <div class="timer-time" id="fiTime">15:00</div>
+        <div class="timer-of" id="fiOf">KLAAR OM TE STARTEN</div>
+      </div>
+    </div>
+    <div class="focus-zone">
+      <div class="zone-steps" id="fiStepsZone" style="display:none">
+        <button class="steps-toggle open" id="fiStepsToggle"><span class="chev">▸</span> Microstappen</button>
+        <div class="steps-list open" id="fiStepsList"></div>
+      </div>
+    </div>
+    <div style="width:100%;display:flex;flex-direction:column;gap:8px;margin-top:auto;padding-bottom:10px">
+      <button class="btn btn-green" id="fiStart">Start focus sessie</button>
+      <button class="btn-link" id="fiNotNow" style="align-self:center">Nu niet</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 4b FOCUS ACTIEF ========== -->
+<section class="screen" id="screen-focus-active">
+  <div class="paused-badge" id="faPaused">GEPAUZEERD</div>
+  <div class="focus-wrap">
+    <div class="label">NU AAN ZET</div>
+    <div class="focus-taskname" id="faName">Taak</div>
+    <div class="mood-word" id="faMood">Gestaag</div>
+    <div class="timer-ring">
+      <svg width="210" height="210" viewBox="0 0 210 210">
+        <circle class="track" cx="105" cy="105" r="94" fill="none" stroke-width="12"/>
+        <circle class="prog" id="faRing" cx="105" cy="105" r="94" fill="none" stroke-width="12" stroke-linecap="round" style="stroke-dasharray:590.6;stroke-dashoffset:0"/>
+      </svg>
+      <div class="timer-center">
+        <div class="timer-time" id="faTime">15:00</div>
+        <div class="timer-of" id="faOf">VAN 15 MINUTEN</div>
+      </div>
+    </div>
+    <div class="focus-zone">
+      <!-- Zone 1: microstappen -->
+      <div class="zone-steps" id="faStepsZone">
+        <button class="steps-toggle open" id="faStepsToggle"><span class="chev">▸</span> Microstappen</button>
+        <div class="steps-list open" id="faStepsList"></div>
+        <div class="add-inline" style="margin-top:10px">
+          <input type="text" id="faStepAdd" placeholder="Nieuwe stap toevoegen…">
+          <button id="faStepAddBtn" aria-label="Stap toevoegen">＋</button>
+        </div>
+        <div class="mini-progress" id="faMiniProgress"></div>
+      </div>
+      <!-- Zone 2: voltooien -->
+      <div class="zone-complete">
+        <button class="btn btn-green" id="faComplete">Voltooien ✓</button>
+      </div>
+      <!-- Zone 4: parkeergedachte -->
+      <div class="zone-park">
+        <div class="label" style="margin-bottom:8px">☆ PARKEER EEN GEDACHTE</div>
+        <div class="row">
+          <input type="text" id="faParkInput" placeholder="Parkeer een gedachte…">
+          <button class="btn btn-blue" id="faParkSave">Bewaar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Zone 3: timer-controls (fixed) -->
+  <div class="timer-controls" id="faControls">
+    <button class="btn btn-ghost" id="faPauseBtn">⏸️ Pauze</button>
+    <button class="btn btn-ghost" id="faPlus5">⏱️ +5 min</button>
+    <button class="btn btn-ghost" id="faStop">⏹️ Stop</button>
+  </div>
+</section>
+
+<!-- ========== 5 DAGAFSLUITING ========== -->
+<section class="screen" id="screen-close1">
+  <div class="screen-header">
+    <div class="label">VANDAAG</div>
+    <h2>Dit heb je gedaan.</h2>
+  </div>
+  <div class="done-list" id="closeDoneList"></div>
+  <div style="margin-top:auto;padding-top:16px">
+    <button class="btn btn-blue" id="close1Next">Verder →</button>
+  </div>
+</section>
+
+<section class="screen" id="screen-close2">
+  <div class="screen-header">
+    <div class="label">EN VANDAAG</div>
+    <h2>Hoe voelt het?</h2>
+  </div>
+  <div class="feel-row">
+    <button class="feel-choice" data-feel="zwaar"><span class="ball ball-heavy"></span><span class="nm">🩶 Zwaar</span></button>
+    <button class="feel-choice" data-feel="oke"><span class="ball ball-ok"></span><span class="nm">🩷 Oké</span></button>
+    <button class="feel-choice" data-feel="trots"><span class="ball ball-proud"></span><span class="nm">💚 Trots</span></button>
+  </div>
+  <div style="margin-top:auto;padding-top:16px">
+    <button class="btn btn-blue" id="close2Next" disabled>Verder →</button>
+  </div>
+</section>
+
+<section class="screen" id="screen-close3">
+  <div class="orb-wrap" style="margin-top:34px"><div class="orb" id="close3Orb"><span></span><span></span><span></span></div></div>
+  <h2 style="text-align:center;font-size:1.4rem">De dag is voorbij.</h2>
+  <p style="text-align:center;color:var(--text-secondary);margin-top:6px">Vandaag voelde <span class="feel-word" id="close3Word">oké</span>.</p>
+  <textarea class="note-field" id="closeDayNote" placeholder="Notitie voor de dag (optioneel)…"></textarea>
+  <div style="margin-top:auto;padding-top:16px">
+    <button class="btn btn-blue" id="close3Next">Afronden →</button>
+  </div>
+</section>
+
+<section class="screen" id="screen-close4">
+  <div class="close-final">
+    <div class="big-check" style="width:96px;height:96px;border-radius:50%;background:var(--accent-green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:3rem;box-shadow:0 8px 26px rgba(52,199,89,.35);animation:popIn .5s cubic-bezier(.2,1.4,.4,1) both">✓</div>
+    <h3 style="margin-top:20px">Dagafsluiting voltooid!</h3>
+    <p style="color:var(--text-secondary);max-width:280px">Ik ben trots op je! Rust goed uit. Tot morgen 💞</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ========== BOTTOM NAV ========== -->
+<nav class="bottomnav">
+  <button class="tab active" data-tab="start"><span class="ico">☀️</span><span class="tab-label">Start</span></button>
+  <button class="tab" data-tab="tasks"><span class="ico">☑️</span><span class="tab-label">Taken</span></button>
+  <button class="tab" data-tab="brain"><span class="ico">💭</span><span class="tab-label">Brein</span></button>
+  <button class="tab" data-tab="close"><span class="ico">🌙</span><span class="tab-label">Dagafsluiting</span></button>
+</nav>
+
+<!-- ========== TAAK-WIZARD (bottom sheet) ========== -->
+<div class="sheet-backdrop" id="wizBackdrop">
+  <div class="sheet" id="wizSheet">
+    <div class="sheet-handle"></div>
+
+    <div class="wiz-step" data-step="1">
+      <div class="wiz-title">Wat ga je doen?</div>
+      <div class="wiz-sub">Eén taak tegelijk.</div>
+      <input type="text" class="wiz-input" id="wizName" placeholder="Bijv. was opvouwen">
+      <div class="wiz-nav">
+        <button class="btn-link back" id="wizCancel">Annuleer</button>
+        <button class="btn btn-blue" id="wiz1Next">Verder →</button>
+      </div>
+    </div>
+
+    <div class="wiz-step" data-step="2">
+      <div class="wiz-title">Energie</div>
+      <div class="wiz-sub">Hoeveel vraagt het?</div>
+      <div class="opt-grid cols3">
+        <button class="opt-btn sel-easy" data-energy="easy">🟢 Makkelijk<small>lage energie</small></button>
+        <button class="opt-btn" data-energy="normal">🔵 Normaal<small>gewoon doen</small></button>
+        <button class="opt-btn sel-intense" data-energy="intense">🟣 Intensief<small>hele batterij</small></button>
+      </div>
+      <div class="wiz-nav">
+        <button class="btn-link back wiz-back">← terug</button>
+        <button class="btn btn-blue" id="wiz2Next">Verder →</button>
+      </div>
+    </div>
+
+    <div class="wiz-step" data-step="3">
+      <div class="wiz-title">Tijd</div>
+      <div class="wiz-sub">Hoe lang denk je?</div>
+      <div class="opt-grid">
+        <button class="opt-btn" data-min="15">15 min</button>
+        <button class="opt-btn" data-min="30">30 min</button>
+        <button class="opt-btn" data-min="60">1 uur</button>
+        <button class="opt-btn" data-min="90">90 min</button>
+      </div>
+      <button class="opt-btn dashed" id="wizCustomTimeBtn" style="width:100%;margin-top:10px">eigen</button>
+      <div id="wizCustomTime" style="display:none">
+        <div class="slider-row">
+          <input type="range" id="wizTimeSlider" min="5" max="240" step="5" value="45">
+          <input type="number" class="num-input" id="wizTimeNum" min="1" max="600" value="45"> min
+        </div>
+      </div>
+      <div class="wiz-nav">
+        <button class="btn-link back wiz-back">← terug</button>
+        <button class="btn btn-blue" id="wiz3Next">Verder →</button>
+      </div>
+    </div>
+
+    <div class="wiz-step" data-step="4">
+      <div class="wiz-title">Planning</div>
+      <div class="wiz-sub">Alles mag leeg blijven.</div>
+      <div class="wiz-section">
+        <span class="label">DAG</span>
+        <div class="chip-row" id="wizDayChips">
+          <button class="chip selected" data-day="none">Geen geplande tijd</button>
+          <button class="chip" data-day="today">Vandaag</button>
+          <button class="chip" data-day="tomorrow">Morgen</button>
+          <button class="chip" data-day="pick">Kies datum</button>
+        </div>
+        <div class="inline-field" id="wizDayPick" style="display:none">
+          <input type="date" class="date-input" id="wizDayDate">
+        </div>
+      </div>
+      <div class="wiz-section">
+        <span class="label">DEADLINE</span>
+        <div class="chip-row" id="wizDeadChips">
+          <button class="chip selected" data-dead="none">Geen</button>
+          <button class="chip" data-dead="today">Vandaag</button>
+          <button class="chip" data-dead="tomorrow">Morgen</button>
+          <button class="chip" data-dead="pick">Kies datum</button>
+        </div>
+        <div class="inline-field" id="wizDeadPick" style="display:none">
+          <input type="date" class="date-input" id="wizDeadDate">
+        </div>
+      </div>
+      <div class="wiz-section">
+        <span class="label">HERHALING</span>
+        <div class="chip-row" id="wizRepChips">
+          <button class="chip selected" data-rep="once">Eenmalig</button>
+          <button class="chip" data-rep="daily">Dagelijks</button>
+          <button class="chip" data-rep="weekdays">Werkdagen</button>
+          <button class="chip" data-rep="weekly">Wekelijks</button>
+          <button class="chip" data-rep="monthly">Maandelijks</button>
+          <button class="chip" data-rep="custom">Eigen interval</button>
+        </div>
+        <div class="inline-field" id="wizRepWeekly" style="display:none">
+          <div class="chip-row" id="wizWeekdayChips">
+            <button class="chip sm" data-wd="1">ma</button><button class="chip sm" data-wd="2">di</button>
+            <button class="chip sm" data-wd="3">wo</button><button class="chip sm" data-wd="4">do</button>
+            <button class="chip sm" data-wd="5">vr</button><button class="chip sm" data-wd="6">za</button>
+            <button class="chip sm" data-wd="0">zo</button>
+          </div>
+        </div>
+        <div class="inline-field" id="wizRepMonthly" style="display:none">
+          Op dag <select class="sel-input" id="wizMonthDay"></select>
+        </div>
+        <div class="inline-field" id="wizRepCustom" style="display:none">
+          Elke <input type="number" class="num-input" id="wizCustomN" min="1" placeholder="2">
+          <select class="sel-input" id="wizCustomUnit">
+            <option value="days">dagen</option>
+            <option value="weeks">weken</option>
+            <option value="months">maanden</option>
+          </select>
+        </div>
+        <div class="inline-field" id="wizRepMode" style="display:none">
+          <div class="chip-row">
+            <button class="chip sm selected" data-mode="after">na afvinken</button>
+            <button class="chip sm" data-mode="fixed">vast schema</button>
+          </div>
+        </div>
+      </div>
+      <div class="wiz-nav">
+        <button class="btn-link back wiz-back">← terug</button>
+        <button class="btn btn-blue" id="wiz4Next">Verder →</button>
+      </div>
+    </div>
+
+    <div class="wiz-step" data-step="5">
+      <div class="wiz-title">Microstappen</div>
+      <div class="wiz-sub">In micro-stappen?</div>
+      <div class="opt-grid cols3">
+        <button class="opt-btn" id="wizAISteps">🤖 Ja, stel voor<small>binnenkort</small></button>
+        <button class="opt-btn" id="wizSelfSteps">✍️ Zelf typen</button>
+        <button class="opt-btn" id="wizNoSteps">Nee, klaar</button>
+      </div>
+      <div id="wizStepsEditor" style="display:none;margin-top:14px">
+        <div class="micro-list" id="wizMicroList"></div>
+        <div class="add-inline">
+          <input type="text" id="wizStepInput" placeholder="Stap beschrijven…">
+          <button id="wizStepAddBtn" aria-label="Stap toevoegen">＋</button>
+        </div>
+      </div>
+      <div class="wiz-nav">
+        <button class="btn-link back wiz-back">← terug</button>
+        <button class="btn btn-blue" id="wiz5Next">Verder →</button>
+      </div>
+    </div>
+
+    <div class="wiz-step" data-step="6">
+      <div class="wiz-title">Klopt dit?</div>
+      <div class="wiz-sub">Samenvatting van je taak.</div>
+      <div class="summary-tags" id="wizSummary"></div>
+      <div class="wiz-nav">
+        <button class="btn-link back wiz-back">← terug</button>
+        <button class="btn btn-green" id="wizSave">Taak opslaan →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="check-overlay" id="checkOverlay">
+  <div class="big-check">✓</div>
+  <h3 id="checkTitle">Toegevoegd.</h3>
+  <p id="checkSub">Taak staat klaar in je takenlijst.</p>
+</div>
+
+</div>
+<script>
+/* =====================================================
+   FOCUS APP — vanilla JS, alles lokaal via localStorage
+   ===================================================== */
+"use strict";
+
+/* ---------- helpers ---------- */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const pad = n => String(n).padStart(2,"0");
+const todayStr = () => { const d=new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); };
+const addDays = (str,n) => { const d=new Date(str+"T12:00:00"); d.setDate(d.getDate()+n); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); };
+const esc = t => String(t).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const DAGEN = ["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
+const MAANDEN = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
+const WD_KORT = ["zo","ma","di","wo","do","vr","za"];
+const ENERGY_META = {
+  easy:   {emoji:"🟢", naam:"Makkelijk", color:"var(--energy-easy)",   mood:"Rustig"},
+  normal: {emoji:"🔵", naam:"Normaal",   color:"var(--energy-normal)", mood:"Gestaag"},
+  intense:{emoji:"🟣", naam:"Intensief", color:"var(--energy-intense)",mood:"Vol gas"}
+};
+const LEVEL_META = {laag:{emoji:"🪫",naam:"Laag"}, normaal:{emoji:"🔋",naam:"Normaal"}, hoog:{emoji:"⚡",naam:"Hoog"}};
+
+function load(key, fallback){ try{ const v=localStorage.getItem(key); return v===null?fallback:JSON.parse(v); }catch(e){ return fallback; } }
+function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+/* ---------- state ---------- */
+let tasks    = load("focusapp_tasks", []);
+let notes    = load("focusapp_notes", []);
+let settings = load("focusapp_settings", {naam:"bi"});
+let day = {
+  date:        load("focusapp_date", null),
+  energy:      load("focusapp_energy", []),          // [{t, niveau, notitie}]
+  todayTasks:  load("focusapp_today_tasks", []),      // taak-IDs
+  completed:   load("focusapp_completed", []),        // [{id, naam, tijd, min}]
+  parked:      load("focusapp_parked", []),           // [{id, tekst, t}]
+  feeling:     load("focusapp_feeling", null),
+  dagstartDone:load("focusapp_dagstart_done", false),
+  focusSec:    load("focusapp_focus_sec", 0),
+  dayNote:     load("focusapp_daynote", "")
+};
+let timer = load("focusapp_timer", null); // {taskId,durationSec,remainingSec,elapsedSec,running,lastTs}
+
+function persistDay(){
+  save("focusapp_date", day.date);
+  save("focusapp_energy", day.energy);
+  save("focusapp_today_tasks", day.todayTasks);
+  save("focusapp_completed", day.completed);
+  save("focusapp_parked", day.parked);
+  save("focusapp_feeling", day.feeling);
+  save("focusapp_dagstart_done", day.dagstartDone);
+  save("focusapp_focus_sec", day.focusSec);
+  save("focusapp_daynote", day.dayNote);
+}
+function persistTasks(){ save("focusapp_tasks", tasks); }
+function persistNotes(){ save("focusapp_notes", notes); }
+function persistTimer(){ save("focusapp_timer", timer); }
+
+/* nieuwe dag? → dagstate resetten (taken & notities blijven) */
+function checkNewDay(){
+  const t = todayStr();
+  if(day.date !== t){
+    day = {date:t, energy:[], todayTasks:[], completed:[], parked:day.parked||[],
+           feeling:null, dagstartDone:false, focusSec:0, dayNote:""};
+    timer = null; persistTimer();
+    persistDay();
+  }
+}
+
+/* ---------- toast & vinkje ---------- */
+let toastTimeout=null;
+function toast(msg){
+  const el=$("#toast"); el.textContent=msg; el.classList.add("show");
+  clearTimeout(toastTimeout);
+  toastTimeout=setTimeout(()=>el.classList.remove("show"),2200);
+}
+function showCheck(title,sub,cb){
+  $("#checkTitle").textContent=title; $("#checkSub").textContent=sub;
+  const ov=$("#checkOverlay"); ov.classList.add("show");
+  setTimeout(()=>{ ov.classList.remove("show"); if(cb)cb(); },1400);
+}
+
+/* ---------- navigatie ---------- */
+let currentScreen=null;
+function showScreen(id){
+  $$(".screen").forEach(s=>s.classList.remove("active"));
+  $("#"+id).classList.add("active");
+  if(id==="screen-choose") $$(".choose-card").forEach(c=>c.classList.remove("selected"));
+  currentScreen=id;
+  window.scrollTo(0,0);
+}
+function setTab(tab){
+  $$(".tab").forEach(t=>t.classList.toggle("active", t.dataset.tab===tab));
+}
+$$(".tab").forEach(t=>t.addEventListener("click",()=>{
+  const tab=t.dataset.tab;
+  setTab(tab);
+  if(tab==="start"){ gotoStart(); }
+  else if(tab==="tasks"){ renderTasksTab(); showScreen("screen-tasks"); }
+  else if(tab==="brain"){ renderBrain(); showScreen("screen-brain"); }
+  else if(tab==="close"){ startClose(); }
+}));
+
+function gotoStart(){
+  if(!day.dagstartDone){ renderEnergyScreen(false); showScreen("screen-energy"); }
+  else { renderHome(); showScreen("screen-home"); }
+}
+
+/* ---------- begroeting & datum ---------- */
+function greetingText(){
+  const h=new Date().getHours();
+  const g = h<12 ? "Goedemorgen" : h<18 ? "Goedemiddag" : "Goedenavond";
+  return g+", "+(settings.naam||"bi");
+}
+function dateText(){
+  const d=new Date();
+  return DAGEN[d.getDay()].charAt(0).toUpperCase()+DAGEN[d.getDay()].slice(1)
+    +" "+d.getDate()+" "+MAANDEN[d.getMonth()]+" · "+pad(d.getHours())+":"+pad(d.getMinutes());
+}
+function lastEnergy(){ return day.energy.length ? day.energy[day.energy.length-1].niveau : null; }
+
+/* =====================================================
+   1. DAGSTART
+   ===================================================== */
+let energySoftMode=false;   // her-meting: alleen energie, daarna terug
+let chosenLevel=null;
+
+function renderEnergyScreen(soft){
+  energySoftMode=soft;
+  chosenLevel=null;
+  $("#energyGreeting").textContent=greetingText();
+  $("#energyDate").textContent=dateText();
+  $("#energyNote").value="";
+  $("#energyNext").disabled=true;
+  $$("#screen-energy .energy-choice").forEach(b=>b.classList.remove("selected"));
+  $("#energyNext").textContent = soft ? "Opslaan →" : "Verder →";
+}
+$$("#screen-energy .energy-choice").forEach(btn=>btn.addEventListener("click",()=>{
+  $$("#screen-energy .energy-choice").forEach(b=>b.classList.remove("selected"));
+  btn.classList.add("selected");
+  chosenLevel=btn.dataset.level;
+  $("#energyNext").disabled=false;
+}));
+$("#energyNext").addEventListener("click",()=>{
+  if(!chosenLevel) return;
+  day.energy.push({t:new Date().toISOString(), niveau:chosenLevel, notitie:$("#energyNote").value.trim()});
+  persistDay();
+  if(energySoftMode || day.dagstartDone){
+    renderHome(); setTab("start"); showScreen("screen-home");
+  } else {
+    const open = openTasks();
+    if(open.length===0){ day.dagstartDone=true; persistDay(); renderHome(); showScreen("screen-home"); }
+    else {
+      const lm=LEVEL_META[chosenLevel];
+      $("#chooseAppSub").textContent="Past bij "+lm.naam.toLowerCase()+" energie";
+      showScreen("screen-choose");
+    }
+  }
+});
+
+/* energie opnieuw meten bij heropenen na 2+ uur (max 4 metingen per dag) */
+function maybeReaskEnergy(){
+  if(!day.dagstartDone) return;
+  if(day.energy.length>=4) return;
+  const last=day.energy[day.energy.length-1];
+  if(!last) return;
+  const uren=(Date.now()-new Date(last.t).getTime())/36e5;
+  if(uren>=2 && currentScreen!=="screen-focus-active" && currentScreen!=="screen-energy"){
+    renderEnergyScreen(true); setTab("start"); showScreen("screen-energy");
+  }
+}
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ checkNewDay(); maybeReaskEnergy(); tickTimer(); } });
+
+/* ---------- taak-kandidaten & scoring ---------- */
+function openTasks(){
+  const t=todayStr();
+  return tasks.filter(x=>!x.done && (!x.day || x.day<=t));
+}
+function scoreTask(task, level){
+  let s=0; const t=todayStr();
+  if(task.deadline && task.deadline<=t) s+=100;
+  if(task.day===t) s+=50;
+  const wens = level==="laag"?"easy": level==="hoog"?"intense":"normal";
+  if(task.energy===wens) s+=30;
+  else if((wens==="normal") || (task.energy==="normal")) s+=10;
+  return s;
+}
+function autoPick(level){
+  return openTasks()
+    .map(t=>({t, s:scoreTask(t,level)}))
+    .sort((a,b)=>b.s-a.s)
+    .slice(0,3).map(x=>x.t.id);
+}
+
+$("#chooseApp").addEventListener("click",()=>{
+  $("#chooseApp").classList.add("selected");
+  day.todayTasks=autoPick(lastEnergy());
+  day.dagstartDone=true; persistDay();
+  setTimeout(()=>{ renderHome(); showScreen("screen-home"); },180);
+});
+$("#chooseSelf").addEventListener("click",()=>{
+  $("#chooseSelf").classList.add("selected");
+  setTimeout(()=>startSwipe(),180);
+});
+
+/* ---------- swipe-kiezer ---------- */
+let swipeQueue=[], swipeChosen=[];
+function startSwipe(){
+  const level=lastEnergy();
+  swipeQueue=openTasks().map(t=>({t,s:scoreTask(t,level)})).sort((a,b)=>b.s-a.s).map(x=>x.t);
+  swipeChosen=[];
+  renderSwipeCard();
+  showScreen("screen-swipe");
+}
+function renderSwipeCard(){
+  $("#swipeCount").textContent=swipeChosen.length+" VAN 3 GEKOZEN";
+  const stage=$("#swipeStage"); stage.innerHTML="";
+  if(swipeChosen.length>=3 || swipeQueue.length===0){ finishSwipe(); return; }
+  const t=swipeQueue[0]; const em=ENERGY_META[t.energy];
+  const card=document.createElement("div");
+  card.className="swipe-card"; card.id="activeSwipeCard";
+  card.style.borderTop="5px solid "+em.color;
+  card.innerHTML = '<span class="pill pill-'+t.energy+'">'+em.emoji+" "+em.naam+"</span>"
+    + "<h3>"+esc(t.name)+"</h3>"
+    + '<div class="meta">'+t.minutes+" min"
+    + (t.steps && t.steps.length? " · "+t.steps.length+" stappen":"")
+    + (t.deadline? " · deadline "+t.deadline:"") + "</div>";
+  stage.appendChild(card);
+  attachSwipeTouch(card);
+}
+function swipeDecide(kies){
+  const card=$("#activeSwipeCard");
+  if(!card||swipeQueue.length===0) return;
+  const t=swipeQueue.shift();
+  if(kies) swipeChosen.push(t.id);
+  card.classList.add(kies?"fly-right":"fly-left");
+  setTimeout(renderSwipeCard,220);
+}
+function attachSwipeTouch(card){
+  let startX=null;
+  card.addEventListener("touchstart",e=>{ startX=e.touches[0].clientX; },{passive:true});
+  card.addEventListener("touchmove",e=>{
+    if(startX===null)return;
+    const dx=e.touches[0].clientX-startX;
+    card.style.transition="none";
+    card.style.transform="translateX("+dx+"px) rotate("+(dx/22)+"deg)";
+  },{passive:true});
+  card.addEventListener("touchend",e=>{
+    const dx=e.changedTouches[0].clientX-(startX??e.changedTouches[0].clientX);
+    card.style.transition="";
+    if(dx>80) swipeDecide(true);
+    else if(dx<-80) swipeDecide(false);
+    else card.style.transform="";
+    startX=null;
+  });
+}
+$("#swipeRight").addEventListener("click",()=>swipeDecide(true));
+$("#swipeLeft").addEventListener("click",()=>swipeDecide(false));
+$("#swipeDone").addEventListener("click",finishSwipe);
+function finishSwipe(){
+  day.todayTasks=swipeChosen.slice();
+  day.dagstartDone=true; persistDay();
+  renderHome(); showScreen("screen-home");
+}
+
+/* =====================================================
+   HOOFDSCHERM
+   ===================================================== */
+function currentTodayTask(){
+  const doneIds=new Set(day.completed.map(c=>c.id));
+  for(const id of day.todayTasks){
+    const t=tasks.find(x=>x.id===id);
+    if(t && !doneIds.has(id) && !t.doneTodayFlag) return t;
+  }
+  return null;
+}
+function renderHome(){
+  $("#homeGreeting").textContent=greetingText();
+  $("#homeDate").textContent=dateText();
+  const lvl=lastEnergy();
+  const lm=lvl?LEVEL_META[lvl]:null;
+  $("#homeEnergyBadge").textContent=lm? lm.emoji+" "+lm.naam : "🔋 Energie";
+
+  const total=day.todayTasks.length;
+  const doneIds=new Set(day.completed.map(c=>c.id));
+  const doneCount=day.todayTasks.filter(id=>doneIds.has(id)).length;
+  const shownNum=Math.min(doneCount+(doneCount<total?1:0), total);
+  $("#homeProgressLabel").textContent="VANDAAG · "+(total? shownNum+" VAN "+total : "0 VAN 0");
+  const planned=day.todayTasks.reduce((s,id)=>{const t=tasks.find(x=>x.id===id);return s+(t?t.minutes:0);},0);
+  const spentMin=Math.floor(day.focusSec/60);
+  $("#homeTimeLabel").textContent=spentMin+"M VAN "+planned+"M";
+  $("#homeProgressFill").style.width=(total? (doneCount/total)*100 : 0)+"%";
+
+  const area=$("#homeTaskArea"); area.innerHTML="";
+  const cur=currentTodayTask();
+
+  if(total===0){
+    area.innerHTML='<div class="card" style="text-align:center;padding:26px">'
+      +'<div style="font-size:1.6rem">🌿</div>'
+      +'<h3 style="margin:8px 0 4px;font-family:var(--font-head)">Geen taken gekozen voor vandaag</h3>'
+      +'<p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:14px">Kies er maximaal 3 — de rest bestaat even niet.</p>'
+      +'<button class="btn btn-blue" id="homePickBtn">Taken kiezen</button></div>';
+    $("#homePickBtn").addEventListener("click",()=>{
+      if(openTasks().length===0){ toast("Nog geen open taken — voeg er eerst één toe"); return; }
+      const lm2=LEVEL_META[lastEnergy()||"normaal"];
+      $("#chooseAppSub").textContent="Past bij "+lm2.naam.toLowerCase()+" energie";
+      showScreen("screen-choose");
+    });
+    return;
+  }
+  if(!cur){
+    area.innerHTML='<div class="alldone">'
+      +'<div class="big-check">✓</div><h3>Alles gedaan voor nu.</h3>'
+      +'<button class="btn btn-blue" id="homeMoreBtn">Ik wil nog een taak doen</button>'
+      +'<button class="btn btn-ghost" id="homeDoneBtn">Klaar voor vandaag</button></div>';
+    $("#homeMoreBtn").addEventListener("click",()=>{
+      const extra=openTasks().filter(t=>!day.todayTasks.includes(t.id))
+        .map(t=>({t,s:scoreTask(t,lastEnergy())})).sort((a,b)=>b.s-a.s);
+      if(extra.length===0){ toast("Geen open taken meer — lekker bezig!"); return; }
+      day.todayTasks.push(extra[0].t.id); persistDay(); renderHome();
+    });
+    $("#homeDoneBtn").addEventListener("click",()=>{ toast("Goed zo. Sluit de dag af via 🌙 als je wilt."); });
+    return;
+  }
+  const em=ENERGY_META[cur.energy];
+  const card=document.createElement("div");
+  card.className="task-card"; card.style.borderLeftColor=em.color;
+  card.innerHTML='<div class="now-row"><span class="now"><span class="dot"></span>NU AAN ZET</span>'
+    +'<span class="pill pill-'+cur.energy+'">'+cur.minutes+' min</span></div>'
+    +'<h3>'+esc(cur.name)+'</h3>'
+    +'<div class="tmeta">'+em.emoji+' '+em.naam+(cur.deadline?' · deadline '+cur.deadline:'')+'</div>'
+    +(cur.steps&&cur.steps.length? '<button class="steps-toggle" id="homeStepsToggle"><span class="chev">▸</span> Microstappen ('+cur.steps.length+')</button><div class="steps-list" id="homeStepsList"></div>':'')
+    +'<button class="btn btn-green" style="margin-top:16px" id="homeStartFocus">Start focus</button>';
+  area.appendChild(card);
+  if(cur.steps&&cur.steps.length){
+    const list=$("#homeStepsList");
+    renderStepRows(list,cur,false);
+    $("#homeStepsToggle").addEventListener("click",()=>{
+      $("#homeStepsToggle").classList.toggle("open");
+      list.classList.toggle("open");
+    });
+  }
+  $("#homeStartFocus").addEventListener("click",()=>openFocusIntro(cur.id));
+}
+function renderStepRows(container,task,interactive){
+  container.innerHTML="";
+  task.steps.forEach((st,i)=>{
+    const row=document.createElement("div");
+    row.className="step-row"+(st.done?" done":"");
+    row.innerHTML='<input type="checkbox" '+(st.done?"checked":"")+'><span class="txt">'+esc(st.text)+"</span>";
+    row.querySelector("input").addEventListener("change",e=>{
+      st.done=e.target.checked; persistTasks();
+      row.classList.toggle("done",st.done);
+      if(interactive) renderFocusSteps(task);
+    });
+    container.appendChild(row);
+  });
+}
+$("#homeEnergyBadge").addEventListener("click",()=>{ renderEnergyScreen(true); showScreen("screen-energy"); });
+
+/* =====================================================
+   2. TAKEN-TAB
+   ===================================================== */
+function repeatLabel(t){
+  const r=t.repeat;
+  if(!r || r.type==="once") return null;
+  if(r.type==="daily") return "dagelijks";
+  if(r.type==="weekdays") return "werkdagen";
+  if(r.type==="weekly") return "wekelijks ("+(r.weekdays||[]).sort((a,b)=>(a===0?7:a)-(b===0?7:b)).map(d=>WD_KORT[d]).join(", ")+")";
+  if(r.type==="monthly") return "maandelijks ("+(r.monthday==="last"?"laatste dag":"dag "+r.monthday)+")";
+  if(r.type==="custom") return "elke "+r.n+" "+({days:"dagen",weeks:"weken",months:"maanden"}[r.unit]);
+  return null;
+}
+let showCompletedList=false;
+function renderTasksTab(){
+  const doneIds=new Set(day.completed.map(c=>c.id));
+
+  /* vandaag */
+  const tb=$("#tasksTodayBlock"); tb.innerHTML="";
+  if(day.todayTasks.length===0){
+    tb.innerHTML='<p class="empty-note">Geen taken gekozen voor vandaag.</p>';
+  } else {
+    const openToday=day.todayTasks.filter(id=>!doneIds.has(id)).map(id=>tasks.find(t=>t.id===id)).filter(Boolean);
+    if(openToday.length){
+      tb.insertAdjacentHTML("beforeend",'<div class="task-group-title"><span class="label">VANDAAG</span></div>');
+      openToday.forEach(t=>tb.appendChild(taskItemEl(t,true)));
+    }
+  }
+  if(day.completed.length){
+    tb.insertAdjacentHTML("beforeend",
+      '<p class="today-chip" style="margin:6px 0 4px">Vandaag voltooid · '+day.completed.length
+      +' <a href="#" id="toggleCompleted">'+(showCompletedList?"verbergen":"tonen")+'</a></p>');
+    $("#toggleCompleted").addEventListener("click",e=>{e.preventDefault();showCompletedList=!showCompletedList;renderTasksTab();});
+    if(showCompletedList){
+      day.completed.forEach(c=>{
+        tb.insertAdjacentHTML("beforeend",'<div class="done-item"><span class="chk">✓</span><span class="nm">'+esc(c.naam)+'</span><span class="tm">'+c.tijd+'</span></div>');
+      });
+    }
+  }
+
+  /* geparkeerde gedachten */
+  const pb=$("#tasksParkedBlock"); pb.innerHTML="";
+  if(day.parked.length){
+    pb.insertAdjacentHTML("beforeend",'<div class="task-group-title"><span class="label">GEPARKEERDE GEDACHTEN</span></div>');
+    day.parked.forEach(p=>pb.appendChild(parkedEl(p,"tasks")));
+  }
+
+  /* alle open taken per energie */
+  const ab=$("#tasksAllBlock"); ab.innerHTML="";
+  const open=tasks.filter(t=>!t.done);
+  const groups=[["easy","🟢 MAKKELIJK"],["normal","🔵 NORMAAL"],["intense","🟣 INTENSIEF"]];
+  let any=false;
+  groups.forEach(([key,title])=>{
+    const list=open.filter(t=>t.energy===key);
+    if(!list.length) return;
+    any=true;
+    ab.insertAdjacentHTML("beforeend",'<div class="task-group-title"><span class="label">'+title+'</span></div>');
+    list.forEach(t=>ab.appendChild(taskItemEl(t,false)));
+  });
+  if(!any && !open.length) ab.insertAdjacentHTML("beforeend",'<p class="empty-note">Nog geen open taken. Voeg er hieronder één toe.</p>');
+}
+function taskItemEl(t,isToday){
+  const em=ENERGY_META[t.energy];
+  const div=document.createElement("div");
+  div.className="task-item"; div.style.borderLeftColor=em.color;
+  const rep=repeatLabel(t);
+  const subs=[];
+  if(rep) subs.push("🔁 "+rep);
+  if(t.steps&&t.steps.length) subs.push(t.steps.length+" stappen");
+  subs.push(t.minutes+" min");
+  if(t.day && t.day!==todayStr()) subs.push("📅 "+t.day);
+  if(t.deadline) subs.push("⏳ "+t.deadline);
+  div.innerHTML='<div class="info"><div class="name">'+esc(t.name)+'</div><div class="sub">'+subs.join(" · ")+'</div></div>'
+    +'<div class="btns">'
+    +'<button class="icon-btn" data-a="start" title="Start focus">▶️</button>'
+    +'<button class="icon-btn" data-a="edit" title="Bewerk">✏️</button>'
+    +'<button class="icon-btn" data-a="del" title="Verwijder">🗑️</button>'
+    +'<button class="icon-btn" data-a="done" title="Voltooien">✅</button></div>';
+  div.querySelector('[data-a="start"]').addEventListener("click",()=>{
+    if(!day.todayTasks.includes(t.id)) { day.todayTasks.push(t.id); persistDay(); }
+    openFocusIntro(t.id);
+  });
+  div.querySelector('[data-a="edit"]').addEventListener("click",()=>openWizard({edit:t}));
+  div.querySelector('[data-a="del"]').addEventListener("click",()=>{
+    if(confirm('Taak "'+t.name+'" verwijderen?')){
+      tasks=tasks.filter(x=>x.id!==t.id);
+      day.todayTasks=day.todayTasks.filter(id=>id!==t.id);
+      persistTasks(); persistDay(); renderTasksTab();
+      toast("Taak verwijderd");
+    }
+  });
+  div.querySelector('[data-a="done"]').addEventListener("click",()=>{ completeTask(t.id,0); renderTasksTab(); });
+  return div;
+}
+function parkedEl(p,context){
+  const div=document.createElement("div");
+  div.className="parked-item";
+  div.innerHTML='<div class="txt">☆ '+esc(p.tekst)+'</div><div class="row"></div>';
+  const row=div.querySelector(".row");
+  const mk=document.createElement("button"); mk.textContent="Maak taak";
+  mk.addEventListener("click",()=>{ removeParked(p.id); openWizard({name:p.tekst}); });
+  row.appendChild(mk);
+  if(context==="brain"){
+    const nt=document.createElement("button"); nt.textContent="Bewaar als notitie";
+    nt.addEventListener("click",()=>{
+      notes.unshift({id:uid(),text:p.tekst,cat:"Persoonlijk",created:todayStr()});
+      persistNotes(); removeParked(p.id); renderBrain(); toast("Bewaard als notitie");
+    });
+    row.appendChild(nt);
+  }
+  const rm=document.createElement("button"); rm.textContent="Weg";
+  rm.addEventListener("click",()=>{ removeParked(p.id); toast("Gedachte weg"); });
+  row.appendChild(rm);
+  return div;
+}
+function removeParked(id){
+  day.parked=day.parked.filter(x=>x.id!==id); persistDay();
+  if(currentScreen==="screen-tasks") renderTasksTab();
+  if(currentScreen==="screen-brain") renderBrain();
+}
+
+/* ---------- taak voltooien + herhaling ---------- */
+function nextOccurrence(t){
+  const r=t.repeat;
+  const base = r.mode==="fixed" && t.day ? t.day : todayStr();
+  if(r.type==="daily") return addDays(base,1);
+  if(r.type==="weekdays"){
+    let d=addDays(base,1);
+    while([0,6].includes(new Date(d+"T12:00:00").getDay())) d=addDays(d,1);
+    return d;
+  }
+  if(r.type==="weekly"){
+    const set=new Set(r.weekdays&&r.weekdays.length?r.weekdays:[new Date(base+"T12:00:00").getDay()]);
+    let d=addDays(base,1);
+    for(let i=0;i<60;i++){ if(set.has(new Date(d+"T12:00:00").getDay())) return d; d=addDays(d,1); }
+    return addDays(base,7);
+  }
+  if(r.type==="monthly"){
+    let d=addDays(base,1);
+    for(let i=0;i<400;i++){
+      const dt=new Date(d+"T12:00:00");
+      const lastDay=new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate();
+      if(r.monthday==="last" ? dt.getDate()===lastDay : dt.getDate()===Number(r.monthday)) return d;
+      d=addDays(d,1);
+    }
+    return addDays(base,30);
+  }
+  if(r.type==="custom"){
+    const n=Math.max(1,Number(r.n)||1);
+    if(r.unit==="days") return addDays(base,n);
+    if(r.unit==="weeks") return addDays(base,n*7);
+    if(r.unit==="months"){
+      const dt=new Date(base+"T12:00:00"); dt.setMonth(dt.getMonth()+n);
+      return dt.getFullYear()+"-"+pad(dt.getMonth()+1)+"-"+pad(dt.getDate());
+    }
+  }
+  return null;
+}
+function completeTask(id, extraFocusSec){
+  const t=tasks.find(x=>x.id===id); if(!t) return;
+  const now=new Date();
+  day.completed.push({id:t.id, naam:t.name, tijd:pad(now.getHours())+":"+pad(now.getMinutes()), min:t.minutes});
+  if(extraFocusSec) day.focusSec+=extraFocusSec;
+  if(t.repeat && t.repeat.type!=="once"){
+    t.day=nextOccurrence(t);
+    (t.steps||[]).forEach(s=>s.done=false);
+  } else {
+    t.done=true; t.doneAt=todayStr();
+  }
+  persistTasks(); persistDay();
+}
+
+/* =====================================================
+   TAAK-WIZARD
+   ===================================================== */
+let wiz=null;
+function blankWiz(){
+  return {editId:null, name:"", energy:null, minutes:null,
+    day:"none", dayDate:"", dead:"none", deadDate:"",
+    rep:"once", weekdays:[], monthday:1, customN:"", customUnit:"days", repMode:"after",
+    steps:[]};
+}
+function openWizard(opts){
+  opts=opts||{};
+  wiz=blankWiz();
+  if(opts.edit){
+    const t=opts.edit;
+    wiz.editId=t.id; wiz.name=t.name; wiz.energy=t.energy; wiz.minutes=t.minutes;
+    wiz.steps=(t.steps||[]).map(s=>({text:s.text,done:s.done}));
+    if(t.day){ wiz.day="pick"; wiz.dayDate=t.day; }
+    if(t.deadline){ wiz.dead="pick"; wiz.deadDate=t.deadline; }
+    const r=t.repeat||{type:"once"};
+    wiz.rep=r.type; wiz.weekdays=(r.weekdays||[]).slice();
+    wiz.monthday=r.monthday||1; wiz.customN=r.n||""; wiz.customUnit=r.unit||"days";
+    wiz.repMode=r.mode||"after";
+  }
+  if(opts.name){ wiz.name=opts.name; }
+  $("#wizName").value=wiz.name;
+  syncWizUI();
+  $("#wizBackdrop").classList.add("open");
+  gotoWizStep(opts.name && !opts.edit ? 2 : 1);
+}
+function closeWizard(){ $("#wizBackdrop").classList.remove("open"); }
+$("#wizCancel").addEventListener("click",closeWizard);
+$("#wizBackdrop").addEventListener("click",e=>{ if(e.target.id==="wizBackdrop") closeWizard(); });
+
+function gotoWizStep(n){
+  $$(".wiz-step").forEach(s=>s.classList.toggle("active", Number(s.dataset.step)===n));
+  $("#wizSheet").scrollTop=0;
+  if(n===6) renderWizSummary();
+}
+$$(".wiz-back").forEach(b=>b.addEventListener("click",()=>{
+  const cur=Number($(".wiz-step.active").dataset.step);
+  gotoWizStep(Math.max(1,cur-1));
+}));
+
+function syncWizUI(){
+  /* energie */
+  $$('#wizBackdrop [data-energy]').forEach(b=>b.classList.toggle("selected",b.dataset.energy===wiz.energy));
+  /* tijd */
+  $$('#wizBackdrop [data-min]').forEach(b=>b.classList.toggle("selected",Number(b.dataset.min)===wiz.minutes));
+  const std=[15,30,60,90].includes(wiz.minutes);
+  $("#wizCustomTimeBtn").classList.toggle("selected", wiz.minutes!==null && !std);
+  $("#wizCustomTime").style.display = (wiz.minutes!==null && !std) ? "block":"none";
+  if(wiz.minutes && !std){ $("#wizTimeSlider").value=Math.min(240,wiz.minutes); $("#wizTimeNum").value=wiz.minutes; }
+  /* dag & deadline */
+  $$("#wizDayChips .chip").forEach(c=>c.classList.toggle("selected",c.dataset.day===wiz.day));
+  $("#wizDayPick").style.display = wiz.day==="pick"?"flex":"none";
+  $("#wizDayDate").value=wiz.dayDate||"";
+  $$("#wizDeadChips .chip").forEach(c=>c.classList.toggle("selected",c.dataset.dead===wiz.dead));
+  $("#wizDeadPick").style.display = wiz.dead==="pick"?"flex":"none";
+  $("#wizDeadDate").value=wiz.deadDate||"";
+  /* herhaling */
+  $$("#wizRepChips .chip").forEach(c=>c.classList.toggle("selected",c.dataset.rep===wiz.rep));
+  $("#wizRepWeekly").style.display = wiz.rep==="weekly"?"flex":"none";
+  $("#wizRepMonthly").style.display = wiz.rep==="monthly"?"flex":"none";
+  $("#wizRepCustom").style.display = wiz.rep==="custom"?"flex":"none";
+  $("#wizRepMode").style.display = wiz.rep!=="once"?"flex":"none";
+  $$("#wizWeekdayChips .chip").forEach(c=>c.classList.toggle("selected",wiz.weekdays.includes(Number(c.dataset.wd))));
+  $("#wizMonthDay").value=String(wiz.monthday);
+  $("#wizCustomN").value=wiz.customN;
+  $("#wizCustomUnit").value=wiz.customUnit;
+  $$("#wizRepMode .chip").forEach(c=>c.classList.toggle("selected",c.dataset.mode===wiz.repMode));
+  renderWizSteps();
+}
+
+/* stap 1 */
+$("#wiz1Next").addEventListener("click",()=>{
+  const v=$("#wizName").value.trim();
+  if(!v){ toast("Geef je taak een naam"); return; }
+  wiz.name=v; gotoWizStep(2);
+});
+$("#wizName").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#wiz1Next").click(); });
+
+/* stap 2 */
+$$('#wizBackdrop [data-energy]').forEach(b=>b.addEventListener("click",()=>{
+  wiz.energy=b.dataset.energy; syncWizUI();
+}));
+$("#wiz2Next").addEventListener("click",()=>{
+  if(!wiz.energy){ toast("Kies hoeveel energie het vraagt"); return; }
+  gotoWizStep(3);
+});
+
+/* stap 3 */
+$$('#wizBackdrop [data-min]').forEach(b=>b.addEventListener("click",()=>{
+  wiz.minutes=Number(b.dataset.min); syncWizUI();
+}));
+$("#wizCustomTimeBtn").addEventListener("click",()=>{
+  wiz.minutes=Number($("#wizTimeNum").value)||45;
+  $("#wizCustomTime").style.display="block";
+  syncWizUI();
+});
+$("#wizTimeSlider").addEventListener("input",()=>{
+  $("#wizTimeNum").value=$("#wizTimeSlider").value;
+  wiz.minutes=Number($("#wizTimeSlider").value);
+});
+$("#wizTimeNum").addEventListener("input",()=>{
+  const v=$("#wizTimeNum").value;
+  if(v==="") { wiz.minutes=null; return; }
+  const n=Number(v);
+  if(n>=1){ wiz.minutes=n; $("#wizTimeSlider").value=Math.min(240,Math.max(5,n)); }
+});
+$("#wiz3Next").addEventListener("click",()=>{
+  if(!wiz.minutes || wiz.minutes<1){ toast("Kies of vul een tijd in"); return; }
+  gotoWizStep(4);
+});
+
+/* stap 4 */
+$$("#wizDayChips .chip").forEach(c=>c.addEventListener("click",()=>{ wiz.day=c.dataset.day; syncWizUI(); }));
+$("#wizDayDate").addEventListener("change",()=>{ wiz.dayDate=$("#wizDayDate").value; });
+$$("#wizDeadChips .chip").forEach(c=>c.addEventListener("click",()=>{ wiz.dead=c.dataset.dead; syncWizUI(); }));
+$("#wizDeadDate").addEventListener("change",()=>{ wiz.deadDate=$("#wizDeadDate").value; });
+$$("#wizRepChips .chip").forEach(c=>c.addEventListener("click",()=>{
+  wiz.rep=c.dataset.rep;
+  if(wiz.rep==="weekly" && !wiz.weekdays.length) wiz.weekdays=[new Date().getDay()];
+  syncWizUI();
+}));
+$$("#wizWeekdayChips .chip").forEach(c=>c.addEventListener("click",()=>{
+  const d=Number(c.dataset.wd);
+  wiz.weekdays = wiz.weekdays.includes(d) ? wiz.weekdays.filter(x=>x!==d) : wiz.weekdays.concat(d);
+  syncWizUI();
+}));
+$("#wizMonthDay").addEventListener("change",()=>{
+  const v=$("#wizMonthDay").value;
+  wiz.monthday = v==="last" ? "last" : Number(v);
+});
+$("#wizCustomN").addEventListener("input",()=>{ wiz.customN=$("#wizCustomN").value; });
+$("#wizCustomUnit").addEventListener("change",()=>{ wiz.customUnit=$("#wizCustomUnit").value; });
+$$("#wizRepMode .chip").forEach(c=>c.addEventListener("click",()=>{ wiz.repMode=c.dataset.mode; syncWizUI(); }));
+$("#wiz4Next").addEventListener("click",()=>{
+  if(wiz.day==="pick" && !wiz.dayDate){ toast("Kies een datum voor de dag, of zet DAG op 'geen'"); return; }
+  if(wiz.dead==="pick" && !wiz.deadDate){ toast("Kies een datum voor de deadline, of zet die op 'geen'"); return; }
+  if(wiz.rep==="weekly" && !wiz.weekdays.length){ toast("Kies minstens één weekdag"); return; }
+  if(wiz.rep==="custom"){
+    const n=Number(wiz.customN);
+    if(!wiz.customN || !Number.isFinite(n) || n<1){ toast("Vul in: elke hoeveel dagen/weken/maanden?"); return; }
+  }
+  gotoWizStep(5);
+});
+
+/* stap 5 — microstappen */
+function renderWizSteps(){
+  const list=$("#wizMicroList"); list.innerHTML="";
+  wiz.steps.forEach((s,i)=>{
+    const div=document.createElement("div");
+    div.className="micro-item";
+    div.innerHTML='<span class="n">'+(i+1)+'</span><span class="t">'+esc(s.text)+'</span>';
+    const del=document.createElement("button");
+    del.className="icon-btn"; del.textContent="🗑️";
+    del.addEventListener("click",()=>{ wiz.steps.splice(i,1); renderWizSteps(); });
+    div.appendChild(del);
+    list.appendChild(div);
+  });
+}
+$("#wizAISteps").addEventListener("click",()=>{
+  toast("🤖 AI-voorstellen komen binnenkort — typ ze voorlopig zelf");
+  $("#wizStepsEditor").style.display="block";
+});
+$("#wizSelfSteps").addEventListener("click",()=>{ $("#wizStepsEditor").style.display="block"; $("#wizStepInput").focus(); });
+$("#wizNoSteps").addEventListener("click",()=>{ gotoWizStep(6); });
+function wizAddStep(){
+  const v=$("#wizStepInput").value.trim();
+  if(!v) return;
+  wiz.steps.push({text:v,done:false});
+  $("#wizStepInput").value="";
+  renderWizSteps();
+  $("#wizStepInput").focus();
+}
+$("#wizStepAddBtn").addEventListener("click",wizAddStep);
+$("#wizStepInput").addEventListener("keydown",e=>{ if(e.key==="Enter") wizAddStep(); });
+$("#wiz5Next").addEventListener("click",()=>gotoWizStep(6));
+
+/* stap 6 — samenvatting & opslaan */
+function resolveDate(kind,date){
+  if(kind==="none") return null;
+  if(kind==="today") return todayStr();
+  if(kind==="tomorrow") return addDays(todayStr(),1);
+  return date||null;
+}
+function renderWizSummary(){
+  const em=ENERGY_META[wiz.energy]||{emoji:"",naam:"?"};
+  const tags=[
+    "📝 "+wiz.name,
+    em.emoji+" "+em.naam,
+    "⏱️ "+wiz.minutes+" min"
+  ];
+  const d=resolveDate(wiz.day,wiz.dayDate);
+  const dl=resolveDate(wiz.dead,wiz.deadDate);
+  tags.push(d? "📅 "+d : "📅 geen geplande tijd");
+  if(dl) tags.push("⏳ deadline "+dl);
+  const fake={repeat:buildRepeat()};
+  const rl=repeatLabel(fake);
+  tags.push("🔁 "+(rl||"eenmalig"));
+  if(wiz.steps.length) tags.push("🪜 "+wiz.steps.length+" stappen");
+  $("#wizSummary").innerHTML=tags.map(t=>'<span class="pill">'+esc(t)+"</span>").join("");
+}
+function buildRepeat(){
+  if(wiz.rep==="once") return {type:"once"};
+  const r={type:wiz.rep, mode:wiz.repMode};
+  if(wiz.rep==="weekly") r.weekdays=wiz.weekdays.slice();
+  if(wiz.rep==="monthly") r.monthday=wiz.monthday;
+  if(wiz.rep==="custom"){ r.n=Math.max(1,Number(wiz.customN)||1); r.unit=wiz.customUnit; }
+  return r;
+}
+$("#wizSave").addEventListener("click",()=>{
+  const data={
+    name:wiz.name, energy:wiz.energy, minutes:wiz.minutes,
+    day:resolveDate(wiz.day,wiz.dayDate),
+    deadline:resolveDate(wiz.dead,wiz.deadDate),
+    repeat:buildRepeat(), steps:wiz.steps.map(s=>({text:s.text,done:!!s.done}))
+  };
+  if(wiz.editId){
+    const t=tasks.find(x=>x.id===wiz.editId);
+    if(t) Object.assign(t,data);
+  } else {
+    tasks.push(Object.assign({id:uid(),created:todayStr(),done:false},data));
+  }
+  persistTasks();
+  closeWizard();
+  showCheck("Toegevoegd.","Taak staat klaar in je takenlijst.",()=>{
+    if(currentScreen==="screen-tasks") renderTasksTab();
+    if(currentScreen==="screen-home") renderHome();
+  });
+  toast(wiz.editId? "Taak bijgewerkt":"Taak opgeslagen ✓");
+});
+
+/* snelle invoer → wizard */
+function quickAddHandler(inputId){
+  const v=$(inputId).value.trim();
+  $(inputId).value="";
+  openWizard(v? {name:v}:{});
+}
+$("#homeQuickAddBtn").addEventListener("click",()=>quickAddHandler("#homeQuickAdd"));
+$("#homeQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter") quickAddHandler("#homeQuickAdd"); });
+$("#tasksQuickAddBtn").addEventListener("click",()=>quickAddHandler("#tasksQuickAdd"));
+$("#tasksQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter") quickAddHandler("#tasksQuickAdd"); });
+
+/* maanddagen vullen */
+(function(){
+  const sel=$("#wizMonthDay");
+  for(let i=1;i<=28;i++){ const o=document.createElement("option"); o.value=String(i); o.textContent=String(i); sel.appendChild(o); }
+  const last=document.createElement("option"); last.value="last"; last.textContent="laatste dag"; sel.appendChild(last);
+})();
+
+/* =====================================================
+   3. BREIN
+   ===================================================== */
+const BRAIN_CATS=["Werk","Computer & tech","Financiën","Fotografie","Joa","Huishouden","Persoonlijk","verzekering","films & series"];
+let brainQuery="";
+function renderBrain(){
+  /* parkeergedachten bovenaan */
+  const pb=$("#brainParkedBlock"); pb.innerHTML="";
+  if(day.parked.length){
+    pb.insertAdjacentHTML("beforeend",'<div class="note-cat"><span class="label">GEPARKEERDE GEDACHTEN</span></div>');
+    day.parked.forEach(p=>pb.appendChild(parkedEl(p,"brain")));
+  }
+  /* notities per categorie */
+  const nb=$("#brainNotesBlock"); nb.innerHTML="";
+  const q=brainQuery.toLowerCase();
+  const filtered=notes.filter(n=>!q || n.text.toLowerCase().includes(q) || (n.cat||"").toLowerCase().includes(q));
+  let any=false;
+  BRAIN_CATS.forEach(cat=>{
+    const list=filtered.filter(n=>n.cat===cat);
+    if(!list.length) return;
+    any=true;
+    nb.insertAdjacentHTML("beforeend",'<div class="note-cat"><span class="label">'+esc(cat.toUpperCase())+'</span></div>');
+    list.forEach(n=>nb.appendChild(noteEl(n)));
+  });
+  const rest=filtered.filter(n=>!BRAIN_CATS.includes(n.cat));
+  if(rest.length){
+    any=true;
+    nb.insertAdjacentHTML("beforeend",'<div class="note-cat"><span class="label">OVERIG</span></div>');
+    rest.forEach(n=>nb.appendChild(noteEl(n)));
+  }
+  if(!any) nb.insertAdjacentHTML("beforeend",'<p class="empty-note">'+(q? "Niets gevonden voor \u201C"+esc(brainQuery)+"\u201D.":"Nog niets onthouden. Typ hieronder je eerste hersenspinsel.")+'</p>');
+}
+function noteEl(n){
+  const div=document.createElement("div");
+  div.className="note-item collapsed";
+  const d=new Date(n.created+"T12:00:00");
+  const datum=isNaN(d)? n.created : d.getDate()+" "+MAANDEN[d.getMonth()];
+  div.innerHTML='<div class="prev">'+esc(n.text)+'</div><div class="date">'+esc(datum)+'</div>'
+    +'<div class="btns"><button class="icon-btn" data-a="edit" title="Bewerk">✏️</button>'
+    +'<button class="icon-btn" data-a="del" title="Verwijder">🗑️</button>'
+    +'<button class="icon-btn" data-a="task" title="Maak taak">☑️</button></div>';
+  div.querySelector(".prev").addEventListener("click",()=>div.classList.toggle("collapsed"));
+  div.querySelector('[data-a="del"]').addEventListener("click",()=>{
+    if(confirm("Notitie verwijderen?")){ notes=notes.filter(x=>x.id!==n.id); persistNotes(); renderBrain(); toast("Notitie verwijderd"); }
+  });
+  div.querySelector('[data-a="task"]').addEventListener("click",()=>openWizard({name:n.text.slice(0,120)}));
+  div.querySelector('[data-a="edit"]').addEventListener("click",()=>{
+    div.innerHTML="";
+    const ta=document.createElement("textarea");
+    ta.className="note-field"; ta.style.marginTop="0"; ta.value=n.text;
+    const selCat=document.createElement("select");
+    selCat.className="sel-input cat-select";
+    BRAIN_CATS.forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; if(c===n.cat)o.selected=true; selCat.appendChild(o); });
+    const row=document.createElement("div"); row.className="row"; row.style.cssText="display:flex;gap:8px;margin-top:9px";
+    const ok=document.createElement("button"); ok.className="btn btn-blue"; ok.textContent="Opslaan"; ok.style.minHeight="42px";
+    const cancel=document.createElement("button"); cancel.className="btn btn-ghost"; cancel.textContent="Annuleer"; cancel.style.minHeight="42px";
+    ok.addEventListener("click",()=>{ n.text=ta.value.trim()||n.text; n.cat=selCat.value; persistNotes(); renderBrain(); toast("Notitie bijgewerkt"); });
+    cancel.addEventListener("click",renderBrain);
+    row.appendChild(ok); row.appendChild(cancel);
+    div.appendChild(ta); div.appendChild(selCat); div.appendChild(row);
+    ta.focus();
+  });
+  return div;
+}
+$("#brainSearch").addEventListener("input",()=>{ brainQuery=$("#brainSearch").value; renderBrain(); });
+function brainAdd(){
+  const v=$("#brainQuickAdd").value.trim();
+  if(!v) return;
+  notes.unshift({id:uid(),text:v,cat:$("#brainCatSelect").value,created:todayStr()});
+  persistNotes();
+  $("#brainQuickAdd").value="";
+  renderBrain(); toast("Onthouden ✓");
+}
+$("#brainQuickAddBtn").addEventListener("click",brainAdd);
+$("#brainQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter") brainAdd(); });
+
+/* =====================================================
+   4. FOCUS
+   ===================================================== */
+const RING_LEN=590.6;
+let focusTaskId=null;
+let timerInterval=null;
+let audioCtx=null;
+
+function taskById(id){ return tasks.find(t=>t.id===id); }
+function fmtMMSS(sec){ sec=Math.max(0,Math.round(sec)); return pad(Math.floor(sec/60))+":"+pad(sec%60); }
+
+function openFocusIntro(id){
+  const t=taskById(id); if(!t) return;
+  focusTaskId=id;
+  const idx=day.todayTasks.indexOf(id);
+  $("#fiNum").textContent=String(idx>=0? idx+1 : 1);
+  $("#fiName").textContent=t.name;
+  const lvl=lastEnergy()||"normaal";
+  const mood= lvl==="laag"?"Rustig": lvl==="hoog"?"Vol gas":"Gestaag";
+  $("#fiMood").textContent=mood;
+  $("#fiTime").textContent=fmtMMSS(t.minutes*60);
+  $("#fiOf").textContent="KLAAR OM TE STARTEN";
+  const zone=$("#fiStepsZone"), list=$("#fiStepsList");
+  if(t.steps&&t.steps.length){ zone.style.display="block"; renderStepRows(list,t,false); }
+  else zone.style.display="none";
+  showScreen("screen-focus-intro");
+}
+$("#fiStepsToggle").addEventListener("click",()=>{
+  $("#fiStepsToggle").classList.toggle("open");
+  $("#fiStepsList").classList.toggle("open");
+});
+$("#fiNotNow").addEventListener("click",()=>{ setTab("start"); gotoStart(); });
+$("#fiStart").addEventListener("click",()=>{
+  const t=taskById(focusTaskId); if(!t) return;
+  timer={taskId:t.id, durationSec:t.minutes*60, remainingSec:t.minutes*60, elapsedSec:0, running:true, lastTs:Date.now(), finished:false};
+  persistTimer();
+  try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  openFocusActive();
+});
+
+function openFocusActive(){
+  const t=taskById(timer&&timer.taskId); if(!t){ timer=null; persistTimer(); gotoStart(); return; }
+  focusTaskId=t.id;
+  $("#faName").textContent=t.name;
+  const lvl=lastEnergy()||"normaal";
+  $("#faMood").textContent= lvl==="laag"?"Rustig": lvl==="hoog"?"Vol gas":"Gestaag";
+  renderFocusSteps(t);
+  updateTimerUI();
+  showScreen("screen-focus-active");
+  startTicking();
+}
+function renderFocusSteps(t){
+  const zone=$("#faStepsZone"), list=$("#faStepsList");
+  if(!t.steps || !t.steps.length){
+    list.innerHTML='<p class="empty-note" style="padding:4px 0">Geen microstappen — voeg er hieronder toe als je wilt.</p>';
+  } else {
+    list.innerHTML="";
+    let currentMarked=false;
+    t.steps.forEach((st)=>{
+      const row=document.createElement("div");
+      row.className="step-row"+(st.done?" done":"");
+      if(!st.done && !currentMarked){ row.classList.add("current"); currentMarked=true; }
+      row.innerHTML='<input type="checkbox" '+(st.done?"checked":"")+'><span class="txt">'+esc(st.text)+"</span>";
+      row.querySelector("input").addEventListener("change",e=>{
+        st.done=e.target.checked; persistTasks();
+        renderFocusSteps(t);           /* timer pauzeert NIET */
+      });
+      list.appendChild(row);
+    });
+  }
+  const mp=$("#faMiniProgress"); mp.innerHTML="";
+  const totaal=(t.steps||[]).length;
+  if(totaal){
+    const klaar=t.steps.filter(s=>s.done).length;
+    t.steps.forEach(s=>{ const i=document.createElement("i"); if(s.done)i.classList.add("done"); mp.appendChild(i); });
+    const lbl=document.createElement("span"); lbl.className="lbl"; lbl.textContent=klaar+" van "+totaal+" klaar";
+    mp.appendChild(lbl);
+  }
+}
+$("#faStepsToggle").addEventListener("click",()=>{
+  $("#faStepsToggle").classList.toggle("open");
+  $("#faStepsList").classList.toggle("open");
+});
+function faAddStep(){
+  const t=taskById(focusTaskId); if(!t) return;
+  const v=$("#faStepAdd").value.trim(); if(!v) return;
+  t.steps=t.steps||[]; t.steps.push({text:v,done:false});
+  persistTasks(); $("#faStepAdd").value="";
+  renderFocusSteps(t);
+}
+$("#faStepAddBtn").addEventListener("click",faAddStep);
+$("#faStepAdd").addEventListener("keydown",e=>{ if(e.key==="Enter") faAddStep(); });
+
+/* timer-motor */
+function startTicking(){
+  clearInterval(timerInterval);
+  timerInterval=setInterval(tickTimer,1000);
+  tickTimer();
+}
+function tickTimer(){
+  if(!timer) return;
+  const now=Date.now();
+  if(timer.running && !timer.finished){
+    const delta=(now-timer.lastTs)/1000;
+    timer.remainingSec-=delta;
+    timer.elapsedSec+=delta;
+    day.focusSec+=delta;
+    timer.lastTs=now;
+    if(timer.remainingSec<=0){
+      timer.remainingSec=0; timer.running=false; timer.finished=true;
+      timerAlarm();
+    }
+    persistTimer(); save("focusapp_focus_sec",day.focusSec);
+  } else { timer.lastTs=now; persistTimer(); }
+  if(currentScreen==="screen-focus-active") updateTimerUI();
+}
+function updateTimerUI(){
+  if(!timer) return;
+  $("#faTime").textContent=fmtMMSS(timer.remainingSec);
+  $("#faOf").textContent= timer.finished? "TIJD IS OM 🎉" : "VAN "+Math.round(timer.durationSec/60)+" MINUTEN";
+  const frac=timer.durationSec? Math.min(1,Math.max(0,1-timer.remainingSec/timer.durationSec)) : 0;
+  $("#faRing").style.strokeDashoffset=String(RING_LEN*frac);
+  $("#faPaused").classList.toggle("show", !timer.running && !timer.finished);
+  $("#faPauseBtn").textContent = timer.running? "⏸️ Pauze" : "▶️ Hervat";
+}
+function timerAlarm(){
+  try{ if(navigator.vibrate) navigator.vibrate([300,120,300,120,500]); }catch(e){}
+  try{
+    if(audioCtx){
+      if(audioCtx.state==="suspended") audioCtx.resume();
+      [0,0.35,0.7].forEach(offset=>{
+        const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+        o.type="sine"; o.frequency.value=880;
+        g.gain.setValueAtTime(0.0001,audioCtx.currentTime+offset);
+        g.gain.exponentialRampToValueAtTime(0.25,audioCtx.currentTime+offset+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+offset+0.3);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(audioCtx.currentTime+offset); o.stop(audioCtx.currentTime+offset+0.32);
+      });
+    }
+  }catch(e){}
+  toast("⏰ Tijd is om — voltooien of +5 min?");
+}
+$("#faPauseBtn").addEventListener("click",()=>{
+  if(!timer||timer.finished) return;
+  timer.running=!timer.running; timer.lastTs=Date.now();
+  persistTimer(); updateTimerUI();
+});
+$("#faPlus5").addEventListener("click",()=>{
+  if(!timer) return;
+  timer.remainingSec+=300; timer.durationSec+=300;
+  if(timer.finished){ timer.finished=false; timer.running=true; timer.lastTs=Date.now(); }
+  persistTimer(); updateTimerUI(); toast("+5 minuten");
+});
+$("#faStop").addEventListener("click",()=>{
+  clearInterval(timerInterval);
+  timer=null; persistTimer(); persistDay();
+  toast("Sessie gestopt — taak blijft open");
+  setTab("start"); gotoStart();
+});
+$("#faComplete").addEventListener("click",()=>{
+  const id=focusTaskId;
+  clearInterval(timerInterval);
+  timer=null; persistTimer();
+  completeTask(id,0);
+  showCheck("Goed gedaan! ✓","Taak voltooid.",()=>{ setTab("start"); gotoStart(); });
+});
+/* parkeergedachte tijdens focus */
+$("#faParkSave").addEventListener("click",()=>{
+  const v=$("#faParkInput").value.trim(); if(!v) return;
+  if(day.parked.length>=10){ toast("Parkeerlijst is vol (max 10) — ruim eerst op"); return; }
+  day.parked.push({id:uid(),tekst:v,t:new Date().toISOString()});
+  persistDay(); $("#faParkInput").value="";
+  toast("☆ Gedachte geparkeerd");
+});
+$("#faParkInput").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#faParkSave").click(); });
+
+/* =====================================================
+   5. DAGAFSLUITING
+   ===================================================== */
+let closeFeel=null;
+function startClose(){
+  const list=$("#closeDoneList"); list.innerHTML="";
+  if(day.completed.length===0){
+    list.innerHTML='<p class="empty-note">Nog niets afgerond vandaag — en dat is oké. Morgen is er weer een dag.</p>';
+  } else {
+    day.completed.forEach(c=>{
+      list.insertAdjacentHTML("beforeend",'<div class="done-item"><span class="chk">✓</span><span class="nm">'+esc(c.naam)+'</span><span class="tm">'+c.tijd+'</span></div>');
+    });
+  }
+  showScreen("screen-close1");
+}
+$("#close1Next").addEventListener("click",()=>{
+  closeFeel=day.feeling;
+  $$(".feel-choice").forEach(f=>f.classList.toggle("selected",f.dataset.feel===closeFeel));
+  $("#close2Next").disabled=!closeFeel;
+  showScreen("screen-close2");
+});
+$$(".feel-choice").forEach(f=>f.addEventListener("click",()=>{
+  closeFeel=f.dataset.feel;
+  $$(".feel-choice").forEach(x=>x.classList.toggle("selected",x===f));
+  $("#close2Next").disabled=false;
+}));
+$("#close2Next").addEventListener("click",()=>{
+  day.feeling=closeFeel; persistDay();
+  const orb=$("#close3Orb");
+  orb.className="orb "+(closeFeel==="zwaar"?"orb-heavy":closeFeel==="oke"?"orb-ok":"orb-proud");
+  const word=$("#close3Word");
+  word.textContent= closeFeel==="oke"?"oké":closeFeel;
+  word.className="feel-word "+closeFeel;
+  $("#closeDayNote").value=day.dayNote||"";
+  showScreen("screen-close3");
+});
+$("#close3Next").addEventListener("click",()=>{
+  day.dayNote=$("#closeDayNote").value.trim(); persistDay();
+  showScreen("screen-close4");
+});
+
+/* =====================================================
+   INIT
+   ===================================================== */
+function init(){
+  checkNewDay();
+  /* lopende timer herstellen na refresh */
+  if(timer && taskById(timer.taskId) && !timer.finished){
+    if(timer.running){
+      const delta=(Date.now()-timer.lastTs)/1000;
+      timer.remainingSec-=delta; timer.elapsedSec+=delta; day.focusSec+=delta;
+      timer.lastTs=Date.now();
+      if(timer.remainingSec<=0){ timer.remainingSec=0; timer.running=false; timer.finished=true; }
+      persistTimer(); persistDay();
+    }
+    setTab("start");
+    openFocusActive();
+    return;
+  }
+  if(timer && !taskById(timer.taskId)){ timer=null; persistTimer(); }
+  setTab("start");
+  gotoStart();
+  maybeReaskEnergy();
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+BOUWOPDRACHT — Focus App (voor Fable)
+
+Bouw een mobile-first PWA genaamd "Focus App" voor Bica: een alleenstaande moeder met ADD die structuur nodig heeft zonder overweldiging. Geïnspireerd op Structuro.ai, maar met betere UX en zonder de bugs/beperkingen van het origineel.
+
+Output: één zelfstandig HTML-bestand (index.html) met alle CSS en JS erin (geen build-stap, geen frameworks/dependencies, behalve eventueel een Google Font via <link>). Werkt standalone in de browser, geen backend nodig voor deze eerste versie.
+
+Doelgroep: één gebruiker, mobiel (Samsung A54/S25), Firefox browser. Max-width 480px, gecentreerd.
+
+---
+
+KERNFILOSOFIE
+
+- Maximaal 3 taken per dag. De rest bestaat even niet.
+- Eén ding tegelijk. Geen overweldigende lijsten.
+- Drie momenten: Dagstart → Focus → Dagafsluiting
+- Laagdrempelig: twee minuten om te starten, twee minuten om af te sluiten.
+- Past zich aan jou aan: sla een dag over, geen score, schoon scherm.
+
+---
+
+BOTTOM NAVIGATION (altijd zichtbaar, 4 tabs)
+
+☀️ Start · ☑️ Taken · 💭 Brein · 🌙 Dagafsluiting
+
+Actieve tab: blauw/donker. Inactieve: grijs. Focus/timer is GEEN eigen tab — die start je vanuit een taak.
+
+---
+
+1. DAGSTART (tab: Start)
+
+Scherm 1a — Energiekeuze:
+- Begroeting op basis van tijd: "Goedemorgen" / "Goedemiddag" / "Goedenavond" + naam "bi" (uit localStorage)
+- Warme sfeerbol (concentrische cirkels, zacht oranje/geel)
+- Vraag: "Hoe is je energie?" — drie keuzes met batterij-iconen: 🔋 Laag / Normaal / Hoog
+- Optioneel notitieveld: korte toelichting waarom energie zo is
+
+Energiemeting meerdere keren per dag:
+- Ook opnieuw vragen bij heropenen van de app na 2+ uur (zachtere versie: alleen de energiekeuze, niet de hele dagstart-flow)
+- Elke meting opslaan met tijdstip (localStorage: array van {tijd, niveau})
+- Energielabel rechtsboven het hoofdscherm toont altijd het laatste niveau
+- Minimaal 1x, maximaal ~3-4x per dag
+
+Scherm 1b — Wie kiest de taken?
+- "Wie kiest je taken?" / "Laat de app voor je denken, of kies zelf?"
+- Kaart 1: ✨ App kiest — "Past bij [energieniveau]" (geselecteerd bij laag)
+- Kaart 2: 📋 Ik kies zelf — "Swipe per taak"
+- App kiest: automatisch max 3 taken afgestemd op energieniveau (makkelijk bij laag, intensief bij hoog)
+- Ik kies zelf: taken één voor één tonen, swipe rechts = vandaag, links = niet vandaag
+
+Scherm 1c — Hoofdscherm (na keuze):
+- Begroeting + naam + energielabel rechts
+- Dag + tijd
+- Voortgang: "VANDAAG · 1 VAN 3" + blauwe voortgangsbalk + "0M VAN 15M"
+- Lichte taakkaart (wit, subtiele schaduw, NIET donker):
+  - 🟢 "Nu aan zet" + tijdsindicatie
+  - Taaknaam groot en bold
+  - Microstappen-sectie (inklapbaar)
+  - Groene "Start focus" knop
+  - Energie-kleur als subtiele accent (linkerborder of klein label)
+- Onderaan: "Nieuwe taak toevoegen..." invoerveld
+
+Als de 3 taken van vandaag klaar zijn:
+- Groot groen vinkje + "Alles gedaan voor nu."
+- "Ik wil nog een taak doen" → volgende taak op basis van energieniveau
+- "Klaar voor vandaag" → terug naar hoofdscherm
+- Geen limiet op hoeveel taken je kúnt doen; 3 is startpunt, geen plafond
+
+---
+
+2. TAKEN (tab: Taken)
+
+- "Taken" / "Maximaal 3. De rest bestaat even niet."
+- "Geen taken gekozen voor vandaag" (als dagstart niet gedaan)
+- "Vandaag voltooid · X" met "tonen" link
+- "Geparkeerde gedachten" — max 10, per item: "Maak taak" en "Weg"
+- "Alle open taken" gegroepeerd op energie: 🟢 MAKKELIJK / 🔵 NORMAAL / 🟣 INTENSIEF
+  - Per taak: naam (afgekapt), herhaling, stappen, tijd, knoppen ▶️ bewerk 🗑️ ✅
+
+Nieuwe taak toevoegen (bottom sheet / modal, stapsgewijze wizard):
+
+Stap 1: "Wat ga je doen?" — tekstveld + "verder →"
+
+Stap 2: "Energie — Hoeveel vraagt het?" — 🟢 Makkelijk (lage energie) / 🔵 Normaal (gewoon doen) / 🟣 Intensief (hele batterij) + "← terug"
+
+Stap 3: "Tijd — Hoe lang denk je?" — knoppen 15 min / 30 min / 1 uur / 90 min, plus "eigen" (gestippeld) → werkende slider + getalveld + "← terug"
+
+Stap 4: Planning, in nette secties:
+- DAG: Geen geplande tijd / Vandaag / Morgen / Kies datum (werkende datumpicker, native HTML date input)
+- DEADLINE (apart van dag!): Geen / Vandaag / Morgen / Kies datum
+- HERHALING: Eenmalig / Dagelijks / Werkdagen / Wekelijks / Maandelijks, plus volledig flexibel "Eigen interval": Elke [getal] [dagen/weken/maanden] (werkend number input, min=1, goed leegmaakbaar), optie "na afvinken" vs "vast", bij wekelijks dag(en) kiezen (ma-zo, meerdere), bij maandelijks dag van de maand (1-28) of "laatste dag"
+
+Stap 5: Microstappen — "In micro-stappen?" — 🤖 "Ja, stel voor" (toekomstige AI-feature, nu placeholder) / ✍️ "Zelf typen" (invulveld + "+ stap toevoegen", genummerd, verwijderbaar) / "Nee, klaar"
+
+Stap 6: Bevestiging — samenvatting als tags (naam, energie, tijd, dag, herhaling) + grote knop "Taak opslaan →" + "← terug"
+
+Na opslaan: groene vinkje-animatie, "Toegevoegd.", "Taak staat klaar in je takenlijst.", toast onderaan.
+
+---
+
+3. BREIN (tab: Brein)
+
+Alle niet-taken: hersenspinsels, dingen om te onthouden, filmtips, technische notities, herinneringen.
+
+- "Brein" / "Alles wat je wilt onthouden"
+- Notities gegroepeerd op categorie: Werk · Computer & tech · Financiën · Fotografie · Joa · Huishouden · Persoonlijk · verzekering · films & series
+- Per notitie: korte preview + datum, tik om volledig te lezen
+- Knoppen per notitie: ✏️ bewerk | 🗑️ verwijder | ☑️ maak taak
+- Zoekbalk bovenaan
+- Invulveld onderaan: "Iets onthouden..." + ➕, optioneel categorie kiezen
+- Parkeergedachten (vanuit focus-sessie) verschijnen bovenaan: "Maak taak" | "Bewaar als notitie" | "Weg", max 10
+
+---
+
+4. FOCUS (gestart vanuit een taak, geen eigen tab)
+
+Scherm 3a — Focus-intro:
+- Lichte, rustige achtergrond
+- Groot taaknummer, "NU AAN ZET", taaknaam groot
+- Sfeerwoord op energie: "Rustig" (laag) / "Gestaag" (normaal) / "Vol gas" (hoog)
+- Groene timer-cirkel met tijd (nog niet gestart)
+- Microstappen-sectie (inklapbaar)
+- "Nu niet" link + groene "Start focus sessie" knop
+
+Scherm 3b — Focus actief (timer loopt):
+- Lichte achtergrond
+- "NU AAN ZET" + taaknaam + sfeerwoord
+- Groene cirkel-timer, aftelling MM:SS + "VAN X MINUTEN", SVG stroke-dashoffset animatie
+
+Layout onderaan in GESCHEIDEN zones (belangrijke verbetering t.o.v. Structuro — niet overlappend):
+- Zone 1: Microstappen (inklapbaar) — checkboxes, actieve stap gemarkeerd (paarse rand links), afvinken pauzeert timer NIET automatisch, "Nieuwe stap toevoegen...", voortgang "0 van 4 klaar" met mini-balkjes
+- Zone 2: Grote groene "Voltooien ✓" knop (volledige breedte)
+- Zone 3: Timer-controls (fixed onderaan): ⏸️ Pauze | ⏱️ +5 min | ⏹️ Stop
+- Zone 4: Parkeergedachte (altijd zichtbaar): ☆ invulveld "Parkeer een gedachte" + blauwe "Bewaar" knop, max 10
+
+Bij pauze: "GEPAUZEERD" label rechtsboven, Pauze-knop wordt "Hervat".
+
+---
+
+5. DAGAFSLUITING (tab: Dagafsluiting)
+
+Scherm 4a: "VANDAAG" / "Dit heb je gedaan." — lijst voltooide taken met tijdstip (groen vinkje) + "verder →"
+
+Scherm 4b: "EN VANDAAG" / "Hoe voelt het?" — drie sfeer-bollen: 🩶 Zwaar (grijs) / 🩷 Oké (roze) / 💚 Trots (groen)
+
+Scherm 4c: Zachte sfeerbol (kleur op basis van keuze), "De dag is voorbij.", "Vandaag voelde [keuze]." (gekleurd woord), notitieveld voor de dag
+
+Scherm 4d: "Dagafsluiting voltooid!" / "Ik ben trots op je! Rust goed uit. Tot morgen 💞"
+
+---
+
+DESIGN
+
+Kleuren (CSS variabelen):
+--bg-main: #F0F2F7 (lichtgrijs-blauw)
+--bg-card: #FFFFFF
+--bg-card-accent: #F7F9FC
+--energy-easy: #34C759 (groen)
+--energy-normal: #3478F6 (blauw)
+--energy-intense: #8B5CF6 (paars)
+--accent-green: #34C759
+--accent-blue: #3478F6
+--accent-focus-green: #30D158
+--text-primary: #1A2332
+--text-secondary: #8E8E93
+--text-on-dark: #FFFFFF
+--text-label: #6B7280
+--feel-heavy: #FF6B9D (roze)
+--feel-ok: #9CA3AF (grijs)
+--feel-proud: #60A5FA (blauw)
+
+Typografie:
+- Geen Inter, Roboto, Arial of system fonts
+- Warme, toegankelijke combinatie: Headings in een ronde vriendelijke sans-serif (bijv. Nunito, Quicksand of Outfit), body leesbaar en rustig
+- Labels (VANDAAG, ENERGIE etc.): letter-spacing 0.15em, uppercase, klein, --text-label kleur
+
+Layout:
+- Mobile-first, max-width 480px, gecentreerd
+- Kaarten: border-radius 16-20px, subtiele shadow
+- Knoppen: border-radius 12-14px, min-height 48px (touch-friendly)
+- Ruime, ademende spacing, niet propvol
+- Bottom nav: fixed, 60px hoog, witte achtergrond, subtiele top-border
+
+Animaties:
+- Pagina-overgangen: zachte fade of slide
+- Timer-cirkel: vloeiende SVG stroke-dashoffset animatie
+- Voltooien: satisfying vinkje-animatie (scale + fade)
+- Energiekeuze: zachte pulse op de sfeerbol
+- Parkeergedachte bewaard: korte slide-up bevestiging
+
+---
+
+TECHNIEK
+
+- Eén HTML-bestand: HTML structuur met secties per scherm (display:none/block voor navigatie), CSS variabelen bovenaan, vanilla JS onderaan
+- Geen externe koppeling in deze versie (geen backend/connector) — alles lokaal via localStorage:
+  - focusapp_energy — gekozen energieniveau vandaag
+  - focusapp_today_tasks — geselecteerde taken voor vandaag (IDs)
+  - focusapp_completed — voltooide taken vandaag (met tijdstip)
+  - focusapp_parked — geparkeerde gedachten (array, max 10)
+  - focusapp_settings — naam, voorkeuren
+  - focusapp_timer — timer state (running/paused/stopped, remaining seconds)
+  - focusapp_feeling — dagafsluiting gevoel
+  - focusapp_date — datum van huidige sessie (reset bij nieuwe dag)
+- Timer: setInterval elke seconde, state in localStorage zodat bij page refresh de timer doorgaat, audio/vibration alert bij einde indien toegestaan door browser
+
+---
+
+EXPLICIETE VERBETERINGEN T.O.V. STRUCTURO (let hier extra op!)
+
+- Taakkaart licht i.p.v. onnodig donker
+- Energiemeting ook na 2+ uur heropenen, niet alleen bij dagstart
+- Focus-scherm: knoppen NOOIT over microstappen heen — gescheiden zones met eigen ruimte
+- Microstap afvinken pauzeert de timer NIET automatisch
+- Planning als losse secties (DAG / DEADLINE / HERHALING), geen verwarrende zinsconstructie
+- Duidelijke "Taak opslaan →" knop als laatste stap van de wizard
+- Maandelijkse herhaling + volledig zelf instelbare herhaling (elke X dagen/weken/maanden)
+- Getalveld "Elke X dagen" moet een echt werkend, leegmaakbaar number input zijn (niet vastlopen op 1)
+- Datumpicker: native HTML date input als betrouwbare fallback
+- Taak aanmaken moet consistent werken vanuit elke plek in de app, nooit vastlopen
+- Microstappen-tekst volledig zichtbaar of nette uitklap, nooit afgekapt zonder manier om de rest te lezen
+
+---
+
+PRIORITEIT VOOR DEZE EERSTE VERSIE (Fase 1)
+
+Bouw in ieder geval volledig werkend:
+1. HTML/CSS structuur met alle schermen
+2. Bottom navigation
+3. Dagstart-flow (energiekeuze → takenkeuze)
+4. Taken-tab met lijst en volledige nieuwe-taak-wizard
+5. localStorage voor alle bovengenoemde state
+6. Responsive mobile design volgens de kleuren/typografie/layout-specs hierboven
+
+Focus-sessie met timer, Brein-tab en dagafsluiting mogen in een eerste opzet minimaal/placeholder zijn, maar bouw ze het liefst meteen mee als de tijd/omvang het toelaat — de hele flow hierboven is het einddoel.
+
+Geef als output het complete index.html bestand in één enkel codeblok, zodat het direct te kopiëren en op te slaan is.
