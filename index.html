@@ -978,6 +978,7 @@ function minutesToEnergy(min){
   return "intense";
 }
 
+let allSheetItems = load("focusapp_allitems", []);  // volledige, ruwe Sheet-items (voor AI-zoeken)
 let syncQueue = load("focusapp_syncqueue", []);   // [{action,item|id,updates}]
 function persistSyncQueue(){ save("focusapp_syncqueue", syncQueue); }
 let syncState = "idle";  // idle | syncing | ok | offline
@@ -1079,6 +1080,7 @@ async function syncFromSheet(){
     const r=await fetch(SHEETS_URL+"?action=getAll");
     const rows=await r.json();
     if(!Array.isArray(rows)){ setSyncState("offline"); return; }
+    allSheetItems=rows; save("focusapp_allitems", rows);   // volledige set, voor AI-zoeken
     let changed=false;
     rows.forEach(row=>{
       if(row.Goedgekeurd!=="true") return;
@@ -1915,11 +1917,14 @@ async function aiSearch(query){
   if(!getApiKey()){
     return "Nog geen AI-sleutel ingesteld. Tik op ⚙️ hierboven om je Anthropic API-sleutel toe te voegen (dezelfde als in Extern Brein).";
   }
-  const all=[
-    ...tasks.filter(t=>!t.done).map(t=>`[${t.id}] taak: ${t.name} (${t.category||"?"}, ${t.day||"geen dag"})`),
-    ...notes.map(n=>`[${n.id}] notitie: ${n.text} (${n.cat||"?"}, ${n.created||"?"})`)
-  ].join("\n");
-  const prompt_="Je bent een persoonlijke assistent. Beantwoord de volgende zoekvraag aan de hand van de items. Spreek Nederlands, wees beknopt en vriendelijk.\n\nVraag: \""+query+"\"\n\nItems:\n"+all;
+  const source = allSheetItems.length ? allSheetItems : [
+    ...tasks.map(t=>({Type:"taak",Inhoud:t.name,Categorie:t.category,Datum:t.created})),
+    ...notes.map(n=>({Type:"notitie",Inhoud:n.text,Categorie:n.cat,Datum:n.created}))
+  ];
+  const all=source.map(i=>`${i.Type||"item"}: ${i.Inhoud} (${i.Categorie||"?"}, ${(i.Datum||"?").slice(0,10)})`).join("\n");
+  const prompt_="Je bent een persoonlijke assistent. Beantwoord de volgende zoekvraag aan de hand van de items. "
+    +"Spreek Nederlands, wees beknopt en vriendelijk. Noem geen technische ID's of codes — verwijs naar items "
+    +"met hun eigen omschrijving, niet met een code tussen haakjes.\n\nVraag: \""+query+"\"\n\nItems:\n"+all;
   try{
     const r=await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",
