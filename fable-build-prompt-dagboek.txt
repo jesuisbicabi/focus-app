@@ -1,0 +1,111 @@
+INSTRUCTIE VOOR BICA (niet meesturen naar Fable)
+─────────────────────────────────────────────────
+Dit is een aanvulling op een bestaande app, geen nieuwe bouw. Geef Fable 5
+ALTIJD de huidige inhoud van index.html erbij (plakken of uploaden) samen
+met onderstaande tekst, anders bouwt hij blind en breekt hij mogelijk iets
+dat al werkt. Alles onder de streep hieronder is bedoeld om naar Fable te
+kopiëren.
+─────────────────────────────────────────────────
+
+BOUWOPDRACHT — Dagboek/geschiedenis toevoegen aan Focus App
+
+Dit is een UITBREIDING op de bestaande focus-app (index.html, bijgevoegd).
+Bouw voort op deze code — wijzig géén bestaande functionaliteit (dagstart,
+takenwizard, focus-timer, Brein-tab met exterbrain-sync en AI-zoeken,
+dagafsluiting). Voeg alleen nieuwe code toe die daar netjes naast past, in
+dezelfde stijl: vanilla JS, dezelfde `$`/`$$`-helpers, dezelfde
+`load()`/`save()`-localStorage-helpers, dezelfde CSS-variabelen
+(--bg-card, --accent-blue, --radius-card, etc.) en dezelfde
+kaarten/knoppen-vormtaal als de rest van de app. Blijft één HTML-bestand,
+geen nieuwe dependencies, geen backend/API nodig — dit is een puur lokale
+feature (localStorage), dus gratis.
+
+── PROBLEEM ──
+Op dit moment wordt de dagstate (energiemetingen + notitie, dagafsluitings-
+gevoel + notitie, voltooide taken) bij elke nieuwe dag domweg overschreven
+in `checkNewDay()`. Er wordt niets gearchiveerd. Zodra een nieuwe dag
+begint, is alles van de vorige dag onherroepelijk weg. Er is ook nergens
+in de app een scherm dat energie-notities laat teruglezen — zelfs niet
+dezelfde dag.
+
+── DOEL ──
+Een "Dagboek"-overzicht waarmee je:
+1. per dag kunt teruglezen wat je die dag hebt genoteerd (energiemetingen
+   met tijdstip + niveau + toelichting, de dagafsluitingsnotitie en het
+   gekozen gevoel, én de taken die je die dag hebt voltooid)
+2. kunt springen naar een specifieke dag in het verleden (bijv. vorige/
+   volgende dag-knoppen, plus een datumkiezer om direct naar een dag te
+   springen) om die dag te bekijken
+3. kunt filteren/zoeken over ALLE dagen tegelijk — bijvoorbeeld: laat me
+   alle dagen zien waarop mijn energie "Hoog" was, met de bijbehorende
+   notities, zodat ik patronen kan herkennen
+
+Kortom: een doorzoekbaar dagboek-agenda, per dag, met de bijbehorende
+taken van die dag erbij.
+
+── DATA-MODEL: ARCHIVERING ──
+Voeg een nieuwe localStorage-key toe, bijvoorbeeld `focusapp_history`:
+een object gekeyed op datum (`"YYYY-MM-DD"`), met per dag:
+  {
+    energy: [...],       // zelfde vorm als day.energy: [{t, niveau, notitie}]
+    completed: [...],    // zelfde vorm als day.completed: [{id, naam, tijd, min}]
+    feeling: ...,         // zelfde vorm als day.feeling
+    dayNote: "..."        // zelfde vorm als day.dayNote
+  }
+
+Pas `checkNewDay()` aan: vlak vóórdat de dagstate wordt gereset naar een
+nieuwe dag, sla het OUDE `day`-object (energy/completed/feeling/dayNote)
+eerst op in `focusapp_history` onder de datum die verlaten wordt. Daarna
+pas de bestaande reset-logica uitvoeren zoals die nu al werkt.
+
+Let op: dit archiveert alleen vanaf het moment dat deze feature live gaat.
+Dagen van vóór deze wijziging zijn niet meer terug te halen (die data was
+al overschreven) — dat hoeft niet opgelost te worden, alleen vanaf nu moet
+niets meer verloren gaan.
+
+── UI: DAGBOEK-SCHERM ──
+Voeg een nieuw scherm/overlay toe (bijv. `screen-journal`), bereikbaar via
+een duidelijk maar niet opdringerig toegangspunt — bijvoorbeeld een klein
+"📖 Geschiedenis"-linkje op de Dagafsluiting-tab (naast of onder de
+huidige inhoud) én desnoods ook op het Start-hoofdscherm. Geen nieuwe
+bottom-nav-tab nodig (de 4 tabs blijven zoals ze zijn — "Focus/timer is
+geen eigen tab" gold ook al voor de bestaande schermen, zelfde principe
+hier: dit is een sub-scherm, geen hoofdtab).
+
+Twee modi binnen dit scherm, met een simpele toggle/tab bovenin:
+
+**Modus 1 — Per dag bladeren**
+- Titel toont de geselecteerde datum (bijv. "Maandag 6 juli 2026")
+- ← / → knoppen om naar de vorige/volgende dag te springen
+- Een datumkiezer (native HTML date input, zoals elders in de app al
+  gebruikt bij taken-planning) om direct naar een specifieke dag te
+  springen
+- Inhoud voor de geselecteerde dag, in duidelijke secties:
+  - Energiemetingen die dag: per meting tijdstip + niveau (🔋-emoji zoals
+    elders) + eventuele toelichting-tekst
+  - Voltooide taken die dag: naam + tijdstip (zelfde stijl als de
+    bestaande "Vandaag voltooid"-lijst in de Taken-tab)
+  - Dagafsluiting: gekozen gevoel (🩶/🩷/💚, zelfde kleuren als het
+    bestaande dagafsluitingsscherm) + de dagnotitie-tekst
+  - Als er voor die dag niets is vastgelegd: een rustige lege-staat
+    ("Geen gegevens voor deze dag")
+
+**Modus 2 — Zoeken op energieniveau**
+- Drie filterknoppen: 🔋 Laag / Normaal / Hoog (zelfde stijl als de
+  bestaande energiekeuze-knoppen)
+- Toont een lijst van alle dagen (nieuwste eerst) waarop minstens één
+  meting het gekozen niveau had, met per dag: datum, de bijbehorende
+  toelichting-tekst(en) van die meting(en), en een korte samenvatting van
+  die dag (bijv. aantal voltooide taken)
+- Tik op een dag in deze lijst → springt naar Modus 1 voor die specifieke
+  dag, zodat je meteen de volledige context (taken, dagafsluiting) erbij
+  ziet
+
+── AFBAKENING ──
+- Geen wijzigingen aan exterbrain-sync of de AI-zoekfunctie — dit is
+  pure lokale data, blijft alleen op dit toestel staan (net als de
+  energiemetingen en dagnotitie nu al lokaal zijn)
+- Geen nieuwe verplichte stap ergens in bestaande flows — dit is puur een
+  nieuw, optioneel te bezoeken overzicht
+- Houd het simpel: geen grafieken/statistieken nodig, alleen leesbare
+  lijsten en navigatie
