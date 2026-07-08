@@ -458,6 +458,40 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 }
 .check-overlay h3{font-size:1.4rem;margin:16px 0 4px;font-family:var(--font-head)}
 .check-overlay p{color:var(--text-secondary)}
+
+/* ---------- dagboek / geschiedenis ---------- */
+.journal-toggle{display:flex;gap:8px;margin-bottom:16px}
+.journal-toggle .chip{flex:1;display:flex;align-items:center;justify-content:center;text-align:center}
+.journal-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.journal-nav .icon-btn{width:44px;height:44px;font-size:1.1rem}
+.journal-nav .jtitle{flex:1;text-align:center;font-family:var(--font-head);font-weight:800;font-size:1.02rem}
+.journal-datepick{display:flex;justify-content:center;margin-bottom:14px}
+.jsection{margin:16px 0 8px}
+.jenergy-item{
+  display:flex;align-items:flex-start;gap:11px;background:var(--bg-card);
+  border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:13px 15px;margin-bottom:10px;
+}
+.jenergy-item .ico{font-size:1.25rem;flex:none}
+.jenergy-item .bd{flex:1;min-width:0}
+.jenergy-item .lvl{font-weight:800;font-family:var(--font-head)}
+.jenergy-item .nt{font-size:.92rem;margin-top:3px;overflow-wrap:anywhere}
+.jenergy-item .tm{color:var(--text-secondary);font-size:.82rem;font-variant-numeric:tabular-nums;flex:none}
+.jfeel-card{
+  display:flex;align-items:center;gap:13px;background:var(--bg-card);
+  border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:14px 15px;margin-bottom:10px;
+}
+.jfeel-card .ball{width:44px;height:44px;border-radius:50%;flex:none;box-shadow:var(--shadow-card)}
+.jfeel-card .bd{flex:1;min-width:0}
+.jfeel-card .lvl{font-family:var(--font-head);font-weight:800}
+.jfeel-card .nt{font-size:.92rem;margin-top:3px;overflow-wrap:anywhere}
+.jday-result{
+  width:100%;text-align:left;background:var(--bg-card);border-radius:var(--radius-card);
+  box-shadow:var(--shadow-card);padding:13px 15px;margin-bottom:10px;transition:transform .12s;
+}
+.jday-result:active{transform:scale(.98)}
+.jday-result .dt{font-family:var(--font-head);font-weight:800}
+.jday-result .sm{color:var(--text-secondary);font-size:.82rem;margin-top:2px}
+.jday-result .nt{font-size:.92rem;margin-top:6px;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -550,6 +584,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
     <input type="text" id="homeQuickAdd" placeholder="Nieuwe taak toevoegen…">
     <button id="homeQuickAddBtn" aria-label="Taak toevoegen">＋</button>
   </div>
+  <button class="btn-link" id="homeJournal" style="align-self:center;margin-top:4px">📖 Geschiedenis</button>
 </section>
 
 <!-- ========== 2 TAKEN ========== -->
@@ -688,6 +723,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   <div class="done-list" id="closeDoneList"></div>
   <div style="margin-top:auto;padding-top:16px">
     <button class="btn btn-blue" id="close1Next">Verder →</button>
+    <button class="btn-link" id="close1Journal" style="display:block;margin:6px auto 0">📖 Geschiedenis</button>
   </div>
 </section>
 
@@ -721,6 +757,35 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
     <div class="big-check" style="width:96px;height:96px;border-radius:50%;background:var(--accent-green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:3rem;box-shadow:0 8px 26px rgba(52,199,89,.35);animation:popIn .5s cubic-bezier(.2,1.4,.4,1) both">✓</div>
     <h3 style="margin-top:20px">Dagafsluiting voltooid!</h3>
     <p style="color:var(--text-secondary);max-width:280px">Ik ben trots op je! Rust goed uit. Tot morgen 💞</p>
+  </div>
+</section>
+
+<!-- ========== 6 DAGBOEK / GESCHIEDENIS ========== -->
+<section class="screen" id="screen-journal">
+  <div class="screen-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+    <div><h2>📖 Dagboek</h2><p>Teruglezen hoe je dagen waren</p></div>
+    <button class="btn-link" id="journalBack" style="flex:none">← Terug</button>
+  </div>
+  <div class="journal-toggle">
+    <button class="chip selected" id="jModeDay">📅 Per dag</button>
+    <button class="chip" id="jModeSearch">🔍 Zoek op energie</button>
+  </div>
+  <div id="jDayMode">
+    <div class="journal-nav">
+      <button class="icon-btn" id="jPrev" title="Vorige dag">←</button>
+      <span class="jtitle" id="jTitle"></span>
+      <button class="icon-btn" id="jNext" title="Volgende dag">→</button>
+    </div>
+    <div class="journal-datepick"><input type="date" class="date-input" id="jDatePick"></div>
+    <div id="jDayContent"></div>
+  </div>
+  <div id="jSearchMode" style="display:none">
+    <div class="opt-grid cols3" style="margin-bottom:4px">
+      <button class="opt-btn sel-easy" data-jlevel="laag">🪫 Laag</button>
+      <button class="opt-btn" data-jlevel="normaal">🔋 Normaal</button>
+      <button class="opt-btn sel-intense" data-jlevel="hoog">⚡ Hoog</button>
+    </div>
+    <div id="jSearchResults" style="margin-top:12px"><p class="empty-note">Kies een energieniveau om dagen terug te vinden.</p></div>
   </div>
 </section>
 
@@ -939,6 +1004,7 @@ let day = {
   dayNote:     load("focusapp_daynote", "")
 };
 let timer = load("focusapp_timer", null); // {taskId,durationSec,remainingSec,elapsedSec,running,lastTs}
+let dayHistory = load("focusapp_history", {}); // {"YYYY-MM-DD": {energy,completed,feeling,dayNote}}
 
 function persistDay(){
   save("focusapp_date", day.date);
@@ -954,6 +1020,7 @@ function persistDay(){
 function persistTasks(){ save("focusapp_tasks", tasks); }
 function persistNotes(){ save("focusapp_notes", notes); }
 function persistTimer(){ save("focusapp_timer", timer); }
+function persistHistory(){ save("focusapp_history", dayHistory); }
 
 /* =====================================================
    EXTERBRAIN SYNC (Google Sheets via Apps Script)
@@ -1106,10 +1173,19 @@ async function syncFromSheet(){
   } catch(e){ setSyncState("offline"); }
 }
 
-/* nieuwe dag? → dagstate resetten (taken & notities blijven) */
+/* nieuwe dag? → oude dag archiveren in het dagboek, dan dagstate resetten (taken & notities blijven) */
 function checkNewDay(){
   const t = todayStr();
   if(day.date !== t){
+    if(day.date){
+      dayHistory[day.date] = {
+        energy:    (day.energy||[]).slice(),
+        completed: (day.completed||[]).slice(),
+        feeling:   day.feeling||null,
+        dayNote:   day.dayNote||""
+      };
+      persistHistory();
+    }
     day = {date:t, energy:[], todayTasks:[], completed:[], parked:day.parked||[],
            feeling:null, dagstartDone:false, focusSec:0, dayNote:""};
     timer = null; persistTimer();
@@ -2184,6 +2260,151 @@ $("#close3Next").addEventListener("click",()=>{
   day.dayNote=$("#closeDayNote").value.trim(); persistDay();
   showScreen("screen-close4");
 });
+
+/* =====================================================
+   6. DAGBOEK / GESCHIEDENIS
+   ===================================================== */
+const FEEL_META={
+  zwaar:{emoji:"🩶",naam:"Zwaar",cls:"ball-heavy"},
+  oke:  {emoji:"🩷",naam:"Oké",  cls:"ball-ok"},
+  trots:{emoji:"💚",naam:"Trots",cls:"ball-proud"}
+};
+let journalDate=todayStr();
+let journalReturn="close";   // "close" | "start" — waar de terugknop naartoe gaat
+let journalLevel=null;       // filter in zoekmodus
+
+/* dag-gegevens: vandaag komt live uit `day`, eerdere dagen uit het archief */
+function journalDayData(dateStr){
+  if(day.date && dateStr===day.date){
+    return {energy:day.energy||[], completed:day.completed||[], feeling:day.feeling||null, dayNote:day.dayNote||""};
+  }
+  return dayHistory[dateStr]||null;
+}
+function journalTitle(dateStr){
+  const d=new Date(dateStr+"T12:00:00");
+  if(isNaN(d)) return dateStr;
+  const naam=DAGEN[d.getDay()];
+  return naam.charAt(0).toUpperCase()+naam.slice(1)+" "+d.getDate()+" "+MAANDEN[d.getMonth()]+" "+d.getFullYear();
+}
+function timeFromIso(iso){
+  const d=new Date(iso);
+  return isNaN(d)? "" : pad(d.getHours())+":"+pad(d.getMinutes());
+}
+function openJournal(from){
+  journalReturn=from||"close";
+  journalDate=todayStr();
+  setJournalMode("day");
+  showScreen("screen-journal");
+}
+function setJournalMode(m){
+  $("#jModeDay").classList.toggle("selected", m==="day");
+  $("#jModeSearch").classList.toggle("selected", m==="search");
+  $("#jDayMode").style.display = m==="day" ? "block":"none";
+  $("#jSearchMode").style.display = m==="search" ? "block":"none";
+  if(m==="day") renderJournalDay(); else renderJournalSearch();
+}
+function renderJournalDay(){
+  $("#jTitle").textContent=journalTitle(journalDate);
+  const dp=$("#jDatePick");
+  dp.value=journalDate; dp.max=todayStr();
+  $("#jNext").disabled = journalDate>=todayStr();
+  const c=$("#jDayContent"); c.innerHTML="";
+  const d=journalDayData(journalDate);
+  const hasData = d && ((d.energy&&d.energy.length) || (d.completed&&d.completed.length)
+    || d.feeling || (d.dayNote&&d.dayNote.trim()));
+  if(!hasData){
+    c.innerHTML='<p class="empty-note" style="text-align:center;padding:28px 8px">Geen gegevens voor deze dag.</p>';
+    return;
+  }
+  if(d.energy && d.energy.length){
+    c.insertAdjacentHTML("beforeend",'<div class="jsection"><span class="label">ENERGIEMETINGEN</span></div>');
+    d.energy.forEach(m=>{
+      const lm=LEVEL_META[m.niveau]||{emoji:"🔋",naam:m.niveau||"?"};
+      c.insertAdjacentHTML("beforeend",
+        '<div class="jenergy-item"><span class="ico">'+lm.emoji+'</span>'
+        +'<span class="bd"><span class="lvl">'+esc(lm.naam)+'</span>'
+        +(m.notitie? '<div class="nt">'+esc(m.notitie)+'</div>':'')
+        +'</span><span class="tm">'+timeFromIso(m.t)+'</span></div>');
+    });
+  }
+  if(d.completed && d.completed.length){
+    c.insertAdjacentHTML("beforeend",'<div class="jsection"><span class="label">VOLTOOIDE TAKEN</span></div>');
+    d.completed.forEach(x=>{
+      c.insertAdjacentHTML("beforeend",
+        '<div class="done-item"><span class="chk">✓</span><span class="nm">'+esc(x.naam)
+        +'</span><span class="tm">'+esc(x.tijd||"")+'</span></div>');
+    });
+  }
+  if(d.feeling || (d.dayNote && d.dayNote.trim())){
+    c.insertAdjacentHTML("beforeend",'<div class="jsection"><span class="label">DAGAFSLUITING</span></div>');
+    const fm=d.feeling? FEEL_META[d.feeling] : null;
+    c.insertAdjacentHTML("beforeend",
+      '<div class="jfeel-card">'
+      +(fm? '<span class="ball '+fm.cls+'"></span>':'')
+      +'<span class="bd"><span class="lvl">'
+      +(fm? fm.emoji+' '+fm.naam : 'Geen gevoel gekozen')+'</span>'
+      +(d.dayNote && d.dayNote.trim()? '<div class="nt">'+esc(d.dayNote)+'</div>':'')
+      +'</span></div>');
+  }
+}
+function renderJournalSearch(){
+  const box=$("#jSearchResults");
+  $$("#jSearchMode [data-jlevel]").forEach(b=>b.classList.toggle("selected", b.dataset.jlevel===journalLevel));
+  if(!journalLevel){
+    box.innerHTML='<p class="empty-note">Kies een energieniveau om dagen terug te vinden.</p>';
+    return;
+  }
+  const dates=new Set(Object.keys(dayHistory));
+  if(day.date) dates.add(day.date);
+  const hits=[];
+  Array.from(dates).sort().reverse().forEach(ds=>{
+    const d=journalDayData(ds);
+    if(!d || !d.energy) return;
+    const matches=d.energy.filter(m=>m.niveau===journalLevel);
+    if(!matches.length) return;
+    hits.push({ds, matches, done:(d.completed||[]).length});
+  });
+  box.innerHTML="";
+  if(!hits.length){
+    box.innerHTML='<p class="empty-note">Geen dagen gevonden met energie \u201C'
+      +esc(LEVEL_META[journalLevel].naam.toLowerCase())+'\u201D.</p>';
+    return;
+  }
+  hits.forEach(h=>{
+    const btn=document.createElement("button");
+    btn.className="jday-result";
+    const noteTexts=h.matches.filter(m=>m.notitie).map(m=>
+      '<div class="nt">'+timeFromIso(m.t)+' · '+esc(m.notitie)+'</div>').join("");
+    btn.innerHTML='<div class="dt">'+esc(journalTitle(h.ds))+'</div>'
+      +'<div class="sm">'+h.matches.length+'× '+esc(LEVEL_META[journalLevel].naam.toLowerCase())
+      +' · '+h.done+' '+(h.done===1?'taak':'taken')+' voltooid</div>'
+      +noteTexts;
+    btn.addEventListener("click",()=>{ journalDate=h.ds; setJournalMode("day"); });
+    box.appendChild(btn);
+  });
+}
+$("#jModeDay").addEventListener("click",()=>setJournalMode("day"));
+$("#jModeSearch").addEventListener("click",()=>setJournalMode("search"));
+$("#jPrev").addEventListener("click",()=>{ journalDate=addDays(journalDate,-1); renderJournalDay(); });
+$("#jNext").addEventListener("click",()=>{
+  if(journalDate<todayStr()){ journalDate=addDays(journalDate,1); renderJournalDay(); }
+});
+$("#jDatePick").addEventListener("change",()=>{
+  const v=$("#jDatePick").value;
+  if(!v) return;
+  journalDate = v>todayStr() ? todayStr() : v;
+  renderJournalDay();
+});
+$$("#jSearchMode [data-jlevel]").forEach(b=>b.addEventListener("click",()=>{
+  journalLevel=b.dataset.jlevel;
+  renderJournalSearch();
+}));
+$("#journalBack").addEventListener("click",()=>{
+  if(journalReturn==="start"){ setTab("start"); gotoStart(); }
+  else { setTab("close"); startClose(); }
+});
+$("#close1Journal").addEventListener("click",()=>openJournal("close"));
+$("#homeJournal").addEventListener("click",()=>openJournal("start"));
 
 /* =====================================================
    INIT
