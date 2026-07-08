@@ -484,6 +484,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 .jfeel-card .bd{flex:1;min-width:0}
 .jfeel-card .lvl{font-family:var(--font-head);font-weight:800}
 .jfeel-card .nt{font-size:.92rem;margin-top:3px;overflow-wrap:anywhere}
+.jdel{width:32px;height:32px;font-size:.85rem;flex:none;align-self:flex-start}
 .jday-result{
   width:100%;text-align:left;background:var(--bg-card);border-radius:var(--radius-card);
   box-shadow:var(--shadow-card);padding:13px 15px;margin-bottom:10px;transition:transform .12s;
@@ -2473,6 +2474,29 @@ function setJournalMode(m){
   $("#jSearchMode").style.display = m==="search" ? "block":"none";
   if(m==="day") renderJournalDay(); else renderJournalSearch();
 }
+function journalEntryEmpty(d){
+  return !(d.energy&&d.energy.length) && !(d.completed&&d.completed.length)
+    && !d.feeling && !(d.dayNote&&d.dayNote.trim());
+}
+function journalMutate(dateStr,fn){
+  if(day.date && dateStr===day.date){ fn(day); persistDay(); }
+  else if(dayHistory[dateStr]){
+    fn(dayHistory[dateStr]);
+    if(journalEntryEmpty(dayHistory[dateStr])) delete dayHistory[dateStr];
+    persistHistory();
+  }
+  renderJournalDay();
+}
+function deleteJournalEnergy(dateStr,idx){
+  if(!confirm("Deze energiemeting verwijderen? Dit kan niet ongedaan worden gemaakt.")) return;
+  journalMutate(dateStr,d=>{ (d.energy||[]).splice(idx,1); });
+  toast("Meting verwijderd");
+}
+function deleteJournalClose(dateStr){
+  if(!confirm("De dagafsluiting van deze dag verwijderen (gevoel + dagnotitie)? Dit kan niet ongedaan worden gemaakt.")) return;
+  journalMutate(dateStr,d=>{ d.feeling=null; d.dayNote=""; });
+  toast("Dagafsluiting verwijderd");
+}
 function renderJournalDay(){
   $("#jTitle").textContent=journalTitle(journalDate);
   const dp=$("#jDatePick");
@@ -2480,21 +2504,24 @@ function renderJournalDay(){
   $("#jNext").disabled = journalDate>=todayStr();
   const c=$("#jDayContent"); c.innerHTML="";
   const d=journalDayData(journalDate);
-  const hasData = d && ((d.energy&&d.energy.length) || (d.completed&&d.completed.length)
-    || d.feeling || (d.dayNote&&d.dayNote.trim()));
+  const hasData = d && !journalEntryEmpty(d);
   if(!hasData){
     c.innerHTML='<p class="empty-note" style="text-align:center;padding:28px 8px">Geen gegevens voor deze dag.</p>';
     return;
   }
   if(d.energy && d.energy.length){
     c.insertAdjacentHTML("beforeend",'<div class="jsection"><span class="label">ENERGIEMETINGEN</span></div>');
-    d.energy.forEach(m=>{
+    d.energy.forEach((m,idx)=>{
       const lm=LEVEL_META[m.niveau]||{emoji:"🔋",naam:m.niveau||"?"};
-      c.insertAdjacentHTML("beforeend",
-        '<div class="jenergy-item"><span class="ico">'+lm.emoji+'</span>'
+      const item=document.createElement("div");
+      item.className="jenergy-item";
+      item.innerHTML='<span class="ico">'+lm.emoji+'</span>'
         +'<span class="bd"><span class="lvl">'+esc(lm.naam)+'</span>'
         +(m.notitie? '<div class="nt">'+esc(m.notitie)+'</div>':'')
-        +'</span><span class="tm">'+timeFromIso(m.t)+'</span></div>');
+        +'</span><span class="tm">'+timeFromIso(m.t)+'</span>'
+        +'<button class="icon-btn jdel" title="Verwijder deze meting">🗑️</button>';
+      item.querySelector(".jdel").addEventListener("click",()=>deleteJournalEnergy(journalDate,idx));
+      c.appendChild(item);
     });
   }
   if(d.completed && d.completed.length){
@@ -2508,13 +2535,15 @@ function renderJournalDay(){
   if(d.feeling || (d.dayNote && d.dayNote.trim())){
     c.insertAdjacentHTML("beforeend",'<div class="jsection"><span class="label">DAGAFSLUITING</span></div>');
     const fm=d.feeling? FEEL_META[d.feeling] : null;
-    c.insertAdjacentHTML("beforeend",
-      '<div class="jfeel-card">'
-      +(fm? '<span class="ball '+fm.cls+'"></span>':'')
+    const card=document.createElement("div");
+    card.className="jfeel-card";
+    card.innerHTML=(fm? '<span class="ball '+fm.cls+'"></span>':'')
       +'<span class="bd"><span class="lvl">'
       +(fm? fm.emoji+' '+fm.naam : 'Geen gevoel gekozen')+'</span>'
       +(d.dayNote && d.dayNote.trim()? '<div class="nt">'+esc(d.dayNote)+'</div>':'')
-      +'</span></div>');
+      +'</span><button class="icon-btn jdel" title="Verwijder dagafsluiting">🗑️</button>';
+    card.querySelector(".jdel").addEventListener("click",()=>deleteJournalClose(journalDate));
+    c.appendChild(card);
   }
 }
 function renderJournalSearch(){
