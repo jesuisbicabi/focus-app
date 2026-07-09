@@ -1103,8 +1103,9 @@ function renderSyncBadge(){
 
 async function sheetPost(body){
   try{
-    await fetch(SHEETS_URL, { method:"POST", mode:"no-cors", body: JSON.stringify(body) });
-    return true;
+    const r = await fetch(SHEETS_URL, { method:"POST", body: JSON.stringify(body) });
+    const data = await r.json();
+    return !!(data && data.ok);
   } catch(e){ return false; }
 }
 async function queueOrSend(body){
@@ -1124,6 +1125,30 @@ async function flushSyncQueue(){
   }
   syncQueue=remaining; persistSyncQueue();
   setSyncState(syncQueue.length? "offline":"ok");
+}
+
+/* ---- eenmalige achterstallige-items check ----
+   Door een oude bug (no-cors POST) werden mislukte schrijfacties niet
+   herkend en dus nooit in syncQueue teruggezet. Items die lokaal bestaan
+   maar niet in de Sheet staan, alsnog versturen — één keer per apparaat. */
+const RESYNC_MISSING_KEY = "focusapp_resync_missing_v1";
+async function resyncMissingItems(){
+  if(!sheetsReady()) return 0;
+  const sheetIds = new Set(allSheetItems.map(r=>r.ID));
+  let count=0;
+  for(const t of tasks){
+    if(!sheetIds.has(t.id)){ if(await sheetPost({action:"add", item:taskToSheetItemFull(t)})) count++; }
+  }
+  for(const n of notes){
+    if(!sheetIds.has(n.id)){ if(await sheetPost({action:"add", item:noteToSheetItemFull(n)})) count++; }
+  }
+  return count;
+}
+async function resyncMissingItemsOnce(){
+  if(!sheetsReady() || localStorage.getItem(RESYNC_MISSING_KEY)) return;
+  const count = await resyncMissingItems();
+  localStorage.setItem(RESYNC_MISSING_KEY, "1");
+  if(count) toast(count+" achterstallig item(s) alsnog verstuurd naar Extern Brein");
 }
 
 /* ---- mapping: taak <-> sheet-item ---- */
@@ -2633,7 +2658,7 @@ function init(){
   setTab("start");
   gotoStart();
   maybeReaskEnergy();
-  syncFromSheet();
+  syncFromSheet().then(resyncMissingItemsOnce);
 }
 $("#syncBadge").addEventListener("click",()=>{ if(syncState==="offline") flushSyncQueue(); });
 init();
