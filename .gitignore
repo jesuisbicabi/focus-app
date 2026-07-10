@@ -1,0 +1,6 @@
+# NAS-only werkbestanden: bevatten NAS-paden, werkafspraken en
+# persoonlijke context. Deze repo is publiek (GitHub Pages) — deze
+# bestanden horen alleen in de projectmap op de NAS thuis, nooit online.
+EERST-LEZEN-focus-app.md
+bouwopdracht-*.txt
+index.txt
