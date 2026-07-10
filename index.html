@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#F0F2F7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -56,7 +56,7 @@ body{
 main{
   flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
   overscroll-behavior-y:none;
-  padding:20px 18px 92px;display:flex;flex-direction:column;
+  padding:20px 18px 84px;display:flex;flex-direction:column;
 }
 h1,h2,h3,.btn,.tab-label{font-family:var(--font-head)}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
@@ -344,8 +344,16 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 .note-item.collapsed .prev{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .note-item .date{color:var(--text-secondary);font-size:.76rem;margin-top:6px}
 .note-item .btns{display:flex;gap:6px;margin-top:9px}
-.brain-add{position:sticky;bottom:96px;margin-top:16px}
+.brain-add{
+  position:fixed;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;
+  bottom:calc(54px + env(safe-area-inset-bottom) + var(--kb,0px));
+  padding:10px 18px;background:rgba(240,242,247,.94);backdrop-filter:blur(8px);
+  border-top:1px solid #E4E8F0;z-index:40;transition:bottom .15s ease;
+}
+.brain-add .add-inline{margin-top:0}
 .brain-add .add-inline input{box-shadow:var(--shadow-card)}
+#screen-brain{padding-bottom:76px}
 .cat-select{width:100%;margin-top:8px}
 
 /* ---------- focus ---------- */
@@ -382,7 +390,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 .zone-park input{flex:1;border:1.5px solid #E4E8F0;border-radius:11px;padding:11px 13px;min-height:46px;background:var(--bg-card)}
 .zone-park .btn-blue{width:auto;flex:none;min-height:46px;padding:10px 16px}
 .timer-controls{
-  position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
+  position:fixed;bottom:calc(54px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
   width:100%;max-width:480px;background:rgba(240,242,247,.94);backdrop-filter:blur(8px);
   display:flex;gap:10px;padding:10px 18px calc(10px + env(safe-area-inset-bottom)*0);
   border-top:1px solid #E4E8F0;z-index:40;
@@ -429,21 +437,22 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 /* ---------- bottom nav ---------- */
 .bottomnav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;height:60px;background:var(--bg-card);
+  width:100%;max-width:480px;height:calc(54px + env(safe-area-inset-bottom));
+  background:var(--bg-card);
   border-top:1px solid #E7EAF1;display:flex;z-index:50;
   padding-bottom:env(safe-area-inset-bottom);
 }
 .tab{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  color:var(--text-secondary);transition:color .15s;
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  color:var(--text-secondary);transition:color .15s;overflow:hidden;padding-top:2px;
 }
-.tab .ico{font-size:1.25rem;line-height:1}
-.tab-label{font-size:.66rem;font-weight:700;letter-spacing:.02em}
+.tab .ico{font-size:1.05rem;line-height:1.15}
+.tab-label{font-size:.6rem;font-weight:700;letter-spacing:.02em;line-height:1.1}
 .tab.active{color:var(--accent-blue)}
 
 /* ---------- toast & vinkje-overlay ---------- */
 .toast{
-  position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(20px);
+  position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(20px);
   background:#1A2332;color:#fff;padding:11px 18px;border-radius:12px;
   font-weight:700;font-family:var(--font-head);font-size:.9rem;opacity:0;
   transition:opacity .25s,transform .25s;z-index:80;pointer-events:none;
@@ -530,6 +539,15 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   box-shadow:var(--shadow-card);font-size:.95rem;margin-bottom:14px;overflow-wrap:anywhere;
 }
 .catsheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ---------- typ-modus: veld naar boven, rest even weg ---------- */
+#screen-energy.typing .orb-wrap,
+#screen-energy.typing .energy-choices{display:none}
+#screen-close3.typing .orb-wrap{display:none}
+#energyMini{align-self:center;margin-top:4px}
+
+/* ---------- meegroeiend invoerveld (taaknaam) ---------- */
+.wiz-grow{resize:none;overflow:hidden;line-height:1.45;display:block}
 </style>
 </head>
 <body>
@@ -559,6 +577,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
       <span><span class="tt">Hoog</span><br><span class="ss">Volle batterij</span></span>
     </button>
   </div>
+  <span class="pill" id="energyMini" style="display:none"></span>
   <textarea class="note-field" id="energyNote" placeholder="Korte toelichting (optioneel)…"></textarea>
   <div class="wiz-nav">
     <button class="btn btn-blue" id="energyNext" disabled>Verder →</button>
@@ -835,7 +854,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
     <div class="wiz-step" data-step="1">
       <div class="wiz-title">Wat ga je doen?</div>
       <div class="wiz-sub">Eén taak tegelijk.</div>
-      <input type="text" class="wiz-input" id="wizName" placeholder="Bijv. was opvouwen">
+      <textarea class="wiz-input wiz-grow" id="wizName" rows="1" placeholder="Bijv. was opvouwen"></textarea>
       <div class="wiz-nav">
         <button class="btn-link back" id="wizCancel">Annuleer</button>
         <button class="btn btn-blue" id="wiz1Next">Verder →</button>
@@ -1103,9 +1122,8 @@ function renderSyncBadge(){
 
 async function sheetPost(body){
   try{
-    const r = await fetch(SHEETS_URL, { method:"POST", body: JSON.stringify(body) });
-    const data = await r.json();
-    return !!(data && data.ok);
+    await fetch(SHEETS_URL, { method:"POST", mode:"no-cors", body: JSON.stringify(body) });
+    return true;
   } catch(e){ return false; }
 }
 async function queueOrSend(body){
@@ -1125,30 +1143,6 @@ async function flushSyncQueue(){
   }
   syncQueue=remaining; persistSyncQueue();
   setSyncState(syncQueue.length? "offline":"ok");
-}
-
-/* ---- eenmalige achterstallige-items check ----
-   Door een oude bug (no-cors POST) werden mislukte schrijfacties niet
-   herkend en dus nooit in syncQueue teruggezet. Items die lokaal bestaan
-   maar niet in de Sheet staan, alsnog versturen — één keer per apparaat. */
-const RESYNC_MISSING_KEY = "focusapp_resync_missing_v1";
-async function resyncMissingItems(){
-  if(!sheetsReady()) return 0;
-  const sheetIds = new Set(allSheetItems.map(r=>r.ID));
-  let count=0;
-  for(const t of tasks){
-    if(!sheetIds.has(t.id)){ if(await sheetPost({action:"add", item:taskToSheetItemFull(t)})) count++; }
-  }
-  for(const n of notes){
-    if(!sheetIds.has(n.id)){ if(await sheetPost({action:"add", item:noteToSheetItemFull(n)})) count++; }
-  }
-  return count;
-}
-async function resyncMissingItemsOnce(){
-  if(!sheetsReady() || localStorage.getItem(RESYNC_MISSING_KEY)) return;
-  const count = await resyncMissingItems();
-  localStorage.setItem(RESYNC_MISSING_KEY, "1");
-  if(count) toast(count+" achterstallig item(s) alsnog verstuurd naar Extern Brein");
 }
 
 /* ---- mapping: taak <-> sheet-item ---- */
@@ -1350,6 +1344,37 @@ $("#energyNext").addEventListener("click",()=>{
     }
   }
 });
+
+/* typ-modus: tijdens typen batterijen/bol verbergen zodat het veld boven het toetsenbord staat */
+function enterTyping(screenId){
+  $("#"+screenId).classList.add("typing");
+  if(screenId==="screen-energy"){
+    const mini=$("#energyMini");
+    if(chosenLevel){ const lm=LEVEL_META[chosenLevel]; mini.textContent=lm.emoji+" "+lm.naam; mini.style.display="inline-flex"; }
+  }
+  const mn=$("#main"); if(mn) mn.scrollTop=0;
+}
+function leaveTyping(screenId){
+  $("#"+screenId).classList.remove("typing");
+  if(screenId==="screen-energy") $("#energyMini").style.display="none";
+}
+$("#energyNote").addEventListener("focus",()=>enterTyping("screen-energy"));
+$("#energyNote").addEventListener("blur",()=>leaveTyping("screen-energy"));
+$("#closeDayNote").addEventListener("focus",()=>enterTyping("screen-close3"));
+$("#closeDayNote").addEventListener("blur",()=>leaveTyping("screen-close3"));
+
+/* toetsenbordhoogte volgen zodat vaste balken (Iets onthouden) boven het toetsenbord blijven */
+(function(){
+  if(!window.visualViewport) return;
+  const vv=window.visualViewport;
+  function adjust(){
+    const kb=Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    document.documentElement.style.setProperty("--kb",(kb>40? kb:0)+"px");
+  }
+  vv.addEventListener("resize",adjust);
+  vv.addEventListener("scroll",adjust);
+  adjust();
+})();
 
 /* energie opnieuw meten bij heropenen na 2+ uur (max 4 metingen per dag) */
 function maybeReaskEnergy(){
@@ -1757,6 +1782,7 @@ function openWizard(opts){
   syncWizUI();
   $("#wizBackdrop").classList.add("open");
   gotoWizStep(opts.name && !opts.edit ? 2 : 1);
+  setTimeout(()=>autoGrow($("#wizName")),0);
 }
 function closeWizard(){ $("#wizBackdrop").classList.remove("open"); }
 $("#wizCancel").addEventListener("click",closeWizard);
@@ -1803,12 +1829,14 @@ function syncWizUI(){
 }
 
 /* stap 1 */
+function autoGrow(el){ el.style.height="auto"; el.style.height=(el.scrollHeight+3)+"px"; }
+$("#wizName").addEventListener("input",()=>autoGrow($("#wizName")));
 $("#wiz1Next").addEventListener("click",()=>{
   const v=$("#wizName").value.trim();
   if(!v){ toast("Geef je taak een naam"); return; }
   wiz.name=v; gotoWizStep(2);
 });
-$("#wizName").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#wiz1Next").click(); });
+$("#wizName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); $("#wiz1Next").click(); } });
 
 /* stap 2 */
 $$('#wizBackdrop [data-energy]').forEach(b=>b.addEventListener("click",()=>{
@@ -2658,7 +2686,7 @@ function init(){
   setTab("start");
   gotoStart();
   maybeReaskEnergy();
-  syncFromSheet().then(resyncMissingItemsOnce);
+  syncFromSheet();
 }
 $("#syncBadge").addEventListener("click",()=>{ if(syncState==="offline") flushSyncQueue(); });
 init();
