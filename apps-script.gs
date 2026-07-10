@@ -70,15 +70,15 @@ function doPost(e) {
 
     if (action === 'add') {
       const saved = addItem(body.item);
-      return jsonOk(saved);
+      return jsonOk({ ok: true, item: saved });
     }
     if (action === 'update') {
-      updateItem(body.id, body.updates);
-      return jsonOk({ ok: true });
+      const found = updateItem(body.id, body.updates);
+      return found ? jsonOk({ ok: true }) : jsonErr('ID niet gevonden: ' + body.id);
     }
     if (action === 'delete') {
-      deleteItem(body.id);
-      return jsonOk({ ok: true });
+      const found = deleteItem(body.id);
+      return found ? jsonOk({ ok: true }) : jsonErr('ID niet gevonden: ' + body.id);
     }
     return jsonErr('Onbekende actie: ' + action);
   } catch (err) {
@@ -128,9 +128,10 @@ function updateItem(id, updates) {
           sheet.getRange(i + 1, col + 1).setValue(updates[key]);
         }
       });
-      return;
+      return true;
     }
   }
+  return false;
 }
 
 // ── deleteItem ───────────────────────────────────────────────
@@ -144,9 +145,10 @@ function deleteItem(id) {
   for (let i = data.length - 1; i >= 1; i--) {
     if (String(data[i][idCol]) === String(id)) {
       sheet.deleteRow(i + 1);
-      return;
+      return true;
     }
   }
+  return false;
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -158,6 +160,6 @@ function jsonOk(data) {
 
 function jsonErr(msg) {
   return ContentService
-    .createTextOutput(JSON.stringify({ error: msg }))
+    .createTextOutput(JSON.stringify({ ok: false, error: msg, fout: msg }))
     .setMimeType(ContentService.MimeType.JSON);
 }

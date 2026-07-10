@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#F0F2F7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -39,21 +39,25 @@
   --font-body:'Nunito',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{font-size:16px}
+html{font-size:16px;height:100%;overflow:hidden;overscroll-behavior:none}
 body{
   font-family:var(--font-body);
   background:var(--bg-main);
   color:var(--text-primary);
-  min-height:100vh;
-  min-height:100dvh;
+  height:100%;
+  overflow:hidden;
+  overscroll-behavior:none;
   -webkit-font-smoothing:antialiased;
-  overscroll-behavior-y:none;
 }
 #app{
-  max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;
+  max-width:480px;margin:0 auto;height:100vh;height:100dvh;
   display:flex;flex-direction:column;position:relative;
 }
-main{flex:1;padding:20px 18px 92px;display:flex;flex-direction:column}
+main{
+  flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:none;
+  padding:20px 18px 84px;display:flex;flex-direction:column;
+}
 h1,h2,h3,.btn,.tab-label{font-family:var(--font-head)}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input,textarea,select{font-family:var(--font-body);font-size:1rem;color:var(--text-primary);min-width:0}
@@ -340,8 +344,37 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 .note-item.collapsed .prev{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .note-item .date{color:var(--text-secondary);font-size:.76rem;margin-top:6px}
 .note-item .btns{display:flex;gap:6px;margin-top:9px}
-.brain-add{position:sticky;bottom:96px;margin-top:16px}
-.brain-add .add-inline input{box-shadow:var(--shadow-card)}
+.brain-add{
+  display:none;
+  position:fixed;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;
+  bottom:calc(54px + env(safe-area-inset-bottom) + var(--kb,0px));
+  padding:10px 18px;background:rgba(240,242,247,.94);backdrop-filter:blur(8px);
+  border-top:1px solid #E4E8F0;z-index:40;transition:bottom .15s ease;
+}
+.brain-add.show{display:block}
+.brain-add .add-inline{margin-top:0}
+.brain-add .add-inline textarea{
+  flex:1;background:var(--bg-card);border:1.5px solid #E4E8F0;border-radius:var(--radius-btn);
+  padding:12px 14px;min-height:48px;box-shadow:var(--shadow-card);
+}
+#screen-brain{padding-bottom:96px}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 14px}
+.cat-chip{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:var(--bg-card);border:1.5px solid #E4E8F0;border-radius:var(--radius-btn);
+  padding:11px 13px;min-height:48px;text-align:left;transition:transform .12s;
+}
+.cat-chip:active{transform:scale(.97)}
+.cat-chip .lbl{
+  font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-label);font-weight:700;font-family:var(--font-head);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.cat-chip .cnt{
+  color:var(--text-secondary);font-weight:700;font-size:.72rem;font-family:var(--font-head);
+  background:var(--bg-card-accent);border-radius:999px;padding:2px 9px;flex:none;
+}
 .cat-select{width:100%;margin-top:8px}
 
 /* ---------- focus ---------- */
@@ -378,7 +411,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 .zone-park input{flex:1;border:1.5px solid #E4E8F0;border-radius:11px;padding:11px 13px;min-height:46px;background:var(--bg-card)}
 .zone-park .btn-blue{width:auto;flex:none;min-height:46px;padding:10px 16px}
 .timer-controls{
-  position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
+  position:fixed;bottom:calc(54px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
   width:100%;max-width:480px;background:rgba(240,242,247,.94);backdrop-filter:blur(8px);
   display:flex;gap:10px;padding:10px 18px calc(10px + env(safe-area-inset-bottom)*0);
   border-top:1px solid #E4E8F0;z-index:40;
@@ -425,21 +458,30 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 /* ---------- bottom nav ---------- */
 .bottomnav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;height:60px;background:var(--bg-card);
+  width:100%;max-width:480px;height:calc(54px + env(safe-area-inset-bottom));
+  background:var(--bg-card);
   border-top:1px solid #E7EAF1;display:flex;z-index:50;
   padding-bottom:env(safe-area-inset-bottom);
 }
 .tab{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  color:var(--text-secondary);transition:color .15s;
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  color:var(--text-secondary);transition:color .15s;overflow:hidden;padding-top:2px;
 }
-.tab .ico{font-size:1.25rem;line-height:1}
-.tab-label{font-size:.66rem;font-weight:700;letter-spacing:.02em}
+.tab .ico{
+  font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;
+  height:24px;min-width:46px;border-radius:999px;
+  filter:grayscale(1);opacity:.5;
+  transition:background .15s,transform .15s,filter .15s,opacity .15s;
+}
+.tab.active .ico{
+  filter:none;opacity:1;background:rgba(52,120,246,.14);transform:scale(1.06);
+}
+.tab-label{font-size:.6rem;font-weight:700;letter-spacing:.02em;line-height:1.1}
 .tab.active{color:var(--accent-blue)}
 
 /* ---------- toast & vinkje-overlay ---------- */
 .toast{
-  position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(20px);
+  position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(20px);
   background:#1A2332;color:#fff;padding:11px 18px;border-radius:12px;
   font-weight:700;font-family:var(--font-head);font-size:.9rem;opacity:0;
   transition:opacity .25s,transform .25s;z-index:80;pointer-events:none;
@@ -458,6 +500,83 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 }
 .check-overlay h3{font-size:1.4rem;margin:16px 0 4px;font-family:var(--font-head)}
 .check-overlay p{color:var(--text-secondary)}
+
+/* ---------- dagboek / geschiedenis ---------- */
+.journal-toggle{display:flex;gap:8px;margin-bottom:16px}
+.journal-toggle .chip{flex:1;display:flex;align-items:center;justify-content:center;text-align:center}
+.journal-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.journal-nav .icon-btn{width:44px;height:44px;font-size:1.1rem}
+.journal-nav .jtitle{flex:1;text-align:center;font-family:var(--font-head);font-weight:800;font-size:1.02rem}
+.journal-datepick{display:flex;justify-content:center;margin-bottom:14px}
+.jsection{margin:16px 0 8px}
+.jenergy-item{
+  display:flex;align-items:flex-start;gap:11px;background:var(--bg-card);
+  border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:13px 15px;margin-bottom:10px;
+}
+.jenergy-item .ico{font-size:1.25rem;flex:none}
+.jenergy-item .bd{flex:1;min-width:0}
+.jenergy-item .lvl{font-weight:800;font-family:var(--font-head)}
+.jenergy-item .nt{font-size:.92rem;margin-top:3px;overflow-wrap:anywhere}
+.jenergy-item .tm{color:var(--text-secondary);font-size:.82rem;font-variant-numeric:tabular-nums;flex:none}
+.jfeel-card{
+  display:flex;align-items:center;gap:13px;background:var(--bg-card);
+  border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:14px 15px;margin-bottom:10px;
+}
+.jfeel-card .ball{width:44px;height:44px;border-radius:50%;flex:none;box-shadow:var(--shadow-card)}
+.jfeel-card .bd{flex:1;min-width:0}
+.jfeel-card .lvl{font-family:var(--font-head);font-weight:800}
+.jfeel-card .nt{font-size:.92rem;margin-top:3px;overflow-wrap:anywhere}
+.jdel{width:32px;height:32px;font-size:.85rem;flex:none;align-self:flex-start}
+.jday-result{
+  width:100%;text-align:left;background:var(--bg-card);border-radius:var(--radius-card);
+  box-shadow:var(--shadow-card);padding:13px 15px;margin-bottom:10px;transition:transform .12s;
+}
+.jday-result:active{transform:scale(.98)}
+.jday-result .dt{font-family:var(--font-head);font-weight:800}
+.jday-result .sm{color:var(--text-secondary);font-size:.82rem;margin-top:2px}
+.jday-result .nt{font-size:.92rem;margin-top:6px;overflow-wrap:anywhere}
+
+/* ---------- brein: inklapbare categorieën & zoeken-in-alles ---------- */
+.cat-toggle{display:flex;align-items:center;gap:7px;width:100%;text-align:left;padding:7px 0}
+.cat-toggle .chev{transition:transform .2s;color:var(--text-label);font-size:.85rem;flex:none}
+.cat-toggle.open .chev{transform:rotate(90deg)}
+.cat-toggle .cnt{
+  color:var(--text-secondary);font-weight:700;font-size:.72rem;font-family:var(--font-head);
+  background:var(--bg-card);border-radius:999px;padding:2px 9px;box-shadow:var(--shadow-card);flex:none;
+}
+.jhit-task{
+  display:block;width:100%;text-align:left;background:var(--bg-card);border-radius:var(--radius-card);
+  box-shadow:var(--shadow-card);padding:13px 14px;margin-bottom:10px;border-left:4px solid var(--energy-normal);
+  transition:transform .12s;
+}
+.jhit-task:active{transform:scale(.98)}
+.jhit-task .name{font-weight:700;overflow-wrap:anywhere}
+.jhit-task .sub{color:var(--text-secondary);font-size:.8rem;margin-top:2px}
+.ai-cands{margin:-6px 0 14px}
+.ai-cand{
+  display:block;width:100%;text-align:left;background:var(--bg-card);border-radius:var(--radius-card);
+  box-shadow:var(--shadow-card);padding:11px 14px;margin-bottom:8px;border-left:4px solid var(--energy-intense);
+  transition:transform .12s;
+}
+.ai-cand:active{transform:scale(.98)}
+.ai-cand .t{font-weight:700;font-size:.92rem;overflow-wrap:anywhere}
+.ai-cand .r{color:var(--text-secondary);font-size:.8rem;margin-top:2px}
+.flash{animation:flashBg 1.6s ease}
+@keyframes flashBg{0%{background:#FFF3D6}100%{background:var(--bg-card)}}
+.catsheet-preview{
+  background:var(--bg-card);border-radius:var(--radius-btn);padding:12px 14px;
+  box-shadow:var(--shadow-card);font-size:.95rem;margin-bottom:14px;overflow-wrap:anywhere;
+}
+.catsheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ---------- typ-modus: veld naar boven, rest even weg ---------- */
+#screen-energy.typing .orb-wrap,
+#screen-energy.typing .energy-choices{display:none}
+#screen-close3.typing .orb-wrap{display:none}
+#energyMini{align-self:center;margin-top:4px}
+
+/* ---------- meegroeiend invoerveld (taaknaam) ---------- */
+.wiz-grow{resize:none;overflow:hidden;line-height:1.45;display:block}
 </style>
 </head>
 <body>
@@ -487,6 +606,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
       <span><span class="tt">Hoog</span><br><span class="ss">Volle batterij</span></span>
     </button>
   </div>
+  <span class="pill" id="energyMini" style="display:none"></span>
   <textarea class="note-field" id="energyNote" placeholder="Korte toelichting (optioneel)…"></textarea>
   <div class="wiz-nav">
     <button class="btn btn-blue" id="energyNext" disabled>Verder →</button>
@@ -550,6 +670,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
     <input type="text" id="homeQuickAdd" placeholder="Nieuwe taak toevoegen…">
     <button id="homeQuickAddBtn" aria-label="Taak toevoegen">＋</button>
   </div>
+  <button class="btn-link" id="homeJournal" style="align-self:center;margin-top:4px">📖 Geschiedenis</button>
 </section>
 
 <!-- ========== 2 TAKEN ========== -->
@@ -578,25 +699,9 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
     <button class="ai-ask-btn" id="brainAskBtn" aria-label="Vraag AI" title="Vraag het aan AI">→</button>
   </div>
   <div class="ai-answer" id="brainAiAnswer" style="display:none"></div>
+  <div class="ai-cands" id="brainAiCands"></div>
   <div id="brainParkedBlock"></div>
   <div id="brainNotesBlock"></div>
-  <div class="brain-add">
-    <div class="add-inline">
-      <input type="text" id="brainQuickAdd" placeholder="Iets onthouden…">
-      <button id="brainQuickAddBtn" aria-label="Notitie toevoegen">＋</button>
-    </div>
-    <select class="sel-input cat-select" id="brainCatSelect">
-      <option value="Persoonlijk">Categorie: Persoonlijk</option>
-      <option value="Werk">Categorie: Werk</option>
-      <option value="Computer & tech">Categorie: Computer &amp; tech</option>
-      <option value="Financiën">Categorie: Financiën</option>
-      <option value="Fotografie">Categorie: Fotografie</option>
-      <option value="Joa">Categorie: Joa</option>
-      <option value="Huishouden">Categorie: Huishouden</option>
-      <option value="verzekering">Categorie: verzekering</option>
-      <option value="films & series">Categorie: films &amp; series</option>
-    </select>
-  </div>
 </section>
 
 <!-- ========== 4a FOCUS INTRO ========== -->
@@ -688,6 +793,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   <div class="done-list" id="closeDoneList"></div>
   <div style="margin-top:auto;padding-top:16px">
     <button class="btn btn-blue" id="close1Next">Verder →</button>
+    <button class="btn-link" id="close1Journal" style="display:block;margin:6px auto 0">📖 Geschiedenis</button>
   </div>
 </section>
 
@@ -724,7 +830,44 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   </div>
 </section>
 
+<!-- ========== 6 DAGBOEK / GESCHIEDENIS ========== -->
+<section class="screen" id="screen-journal">
+  <div class="screen-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+    <div><h2>📖 Dagboek</h2><p>Teruglezen hoe je dagen waren</p></div>
+    <button class="btn-link" id="journalBack" style="flex:none">← Terug</button>
+  </div>
+  <div class="journal-toggle">
+    <button class="chip selected" id="jModeDay">📅 Per dag</button>
+    <button class="chip" id="jModeSearch">🔍 Zoek op energie</button>
+  </div>
+  <div id="jDayMode">
+    <div class="journal-nav">
+      <button class="icon-btn" id="jPrev" title="Vorige dag">←</button>
+      <span class="jtitle" id="jTitle"></span>
+      <button class="icon-btn" id="jNext" title="Volgende dag">→</button>
+    </div>
+    <div class="journal-datepick"><input type="date" class="date-input" id="jDatePick"></div>
+    <div id="jDayContent"></div>
+  </div>
+  <div id="jSearchMode" style="display:none">
+    <div class="opt-grid cols3" style="margin-bottom:4px">
+      <button class="opt-btn sel-easy" data-jlevel="laag">🪫 Laag</button>
+      <button class="opt-btn" data-jlevel="normaal">🔋 Normaal</button>
+      <button class="opt-btn sel-intense" data-jlevel="hoog">⚡ Hoog</button>
+    </div>
+    <div id="jSearchResults" style="margin-top:12px"><p class="empty-note">Kies een energieniveau om dagen terug te vinden.</p></div>
+  </div>
+</section>
+
 </main>
+
+<!-- ========== IETS ONTHOUDEN (vaste balk, alleen op Brein) ========== -->
+<div class="brain-add" id="brainAddBar">
+  <div class="add-inline">
+    <textarea class="wiz-grow" id="brainQuickAdd" rows="1" placeholder="Iets onthouden…"></textarea>
+    <button id="brainQuickAddBtn" aria-label="Notitie toevoegen">＋</button>
+  </div>
+</div>
 
 <!-- ========== BOTTOM NAV ========== -->
 <nav class="bottomnav">
@@ -742,7 +885,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
     <div class="wiz-step" data-step="1">
       <div class="wiz-title">Wat ga je doen?</div>
       <div class="wiz-sub">Eén taak tegelijk.</div>
-      <input type="text" class="wiz-input" id="wizName" placeholder="Bijv. was opvouwen">
+      <textarea class="wiz-input wiz-grow" id="wizName" rows="1" placeholder="Bijv. was opvouwen"></textarea>
       <div class="wiz-nav">
         <button class="btn-link back" id="wizCancel">Annuleer</button>
         <button class="btn btn-blue" id="wiz1Next">Verder →</button>
@@ -888,6 +1031,19 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   </div>
 </div>
 
+<div class="sheet-backdrop" id="catBackdrop">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="wiz-title">In welke categorie?</div>
+    <div class="wiz-sub">Tik een categorie — je notitie wordt dan meteen opgeslagen.</div>
+    <div class="catsheet-preview" id="catPreview"></div>
+    <div class="catsheet-grid" id="catGrid"></div>
+    <div class="wiz-nav">
+      <button class="btn-link back" id="catCancel">Annuleer</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <div class="check-overlay" id="checkOverlay">
   <div class="big-check">✓</div>
@@ -939,6 +1095,7 @@ let day = {
   dayNote:     load("focusapp_daynote", "")
 };
 let timer = load("focusapp_timer", null); // {taskId,durationSec,remainingSec,elapsedSec,running,lastTs}
+let dayHistory = load("focusapp_history", {}); // {"YYYY-MM-DD": {energy,completed,feeling,dayNote}}
 
 function persistDay(){
   save("focusapp_date", day.date);
@@ -954,6 +1111,7 @@ function persistDay(){
 function persistTasks(){ save("focusapp_tasks", tasks); }
 function persistNotes(){ save("focusapp_notes", notes); }
 function persistTimer(){ save("focusapp_timer", timer); }
+function persistHistory(){ save("focusapp_history", dayHistory); }
 
 /* =====================================================
    EXTERBRAIN SYNC (Google Sheets via Apps Script)
@@ -1106,10 +1264,19 @@ async function syncFromSheet(){
   } catch(e){ setSyncState("offline"); }
 }
 
-/* nieuwe dag? → dagstate resetten (taken & notities blijven) */
+/* nieuwe dag? → oude dag archiveren in het dagboek, dan dagstate resetten (taken & notities blijven) */
 function checkNewDay(){
   const t = todayStr();
   if(day.date !== t){
+    if(day.date){
+      dayHistory[day.date] = {
+        energy:    (day.energy||[]).slice(),
+        completed: (day.completed||[]).slice(),
+        feeling:   day.feeling||null,
+        dayNote:   day.dayNote||""
+      };
+      persistHistory();
+    }
     day = {date:t, energy:[], todayTasks:[], completed:[], parked:day.parked||[],
            feeling:null, dagstartDone:false, focusSec:0, dayNote:""};
     timer = null; persistTimer();
@@ -1137,6 +1304,8 @@ function showScreen(id){
   $("#"+id).classList.add("active");
   if(id==="screen-choose") $$(".choose-card").forEach(c=>c.classList.remove("selected"));
   currentScreen=id;
+  const bar=$("#brainAddBar"); if(bar) bar.classList.toggle("show", id==="screen-brain");
+  const mn=$("#main"); if(mn) mn.scrollTop=0;
   window.scrollTo(0,0);
 }
 function setTab(tab){
@@ -1147,7 +1316,7 @@ $$(".tab").forEach(t=>t.addEventListener("click",()=>{
   setTab(tab);
   if(tab==="start"){ gotoStart(); }
   else if(tab==="tasks"){ renderTasksTab(); showScreen("screen-tasks"); }
-  else if(tab==="brain"){ $("#brainAiAnswer").style.display="none"; renderBrain(); showScreen("screen-brain"); }
+  else if(tab==="brain"){ $("#brainAiAnswer").style.display="none"; $("#brainAiCands").innerHTML=""; renderBrain(); showScreen("screen-brain"); }
   else if(tab==="close"){ startClose(); }
 }));
 
@@ -1190,6 +1359,8 @@ $$("#screen-energy .energy-choice").forEach(btn=>btn.addEventListener("click",()
   btn.classList.add("selected");
   chosenLevel=btn.dataset.level;
   $("#energyNext").disabled=false;
+  const nf=$("#energyNote");
+  if(nf && nf.scrollIntoView) nf.scrollIntoView({block:"center",behavior:"smooth"});
 }));
 $("#energyNext").addEventListener("click",()=>{
   if(!chosenLevel) return;
@@ -1207,6 +1378,37 @@ $("#energyNext").addEventListener("click",()=>{
     }
   }
 });
+
+/* typ-modus: tijdens typen batterijen/bol verbergen zodat het veld boven het toetsenbord staat */
+function enterTyping(screenId){
+  $("#"+screenId).classList.add("typing");
+  if(screenId==="screen-energy"){
+    const mini=$("#energyMini");
+    if(chosenLevel){ const lm=LEVEL_META[chosenLevel]; mini.textContent=lm.emoji+" "+lm.naam; mini.style.display="inline-flex"; }
+  }
+  const mn=$("#main"); if(mn) mn.scrollTop=0;
+}
+function leaveTyping(screenId){
+  $("#"+screenId).classList.remove("typing");
+  if(screenId==="screen-energy") $("#energyMini").style.display="none";
+}
+$("#energyNote").addEventListener("focus",()=>enterTyping("screen-energy"));
+$("#energyNote").addEventListener("blur",()=>leaveTyping("screen-energy"));
+$("#closeDayNote").addEventListener("focus",()=>enterTyping("screen-close3"));
+$("#closeDayNote").addEventListener("blur",()=>leaveTyping("screen-close3"));
+
+/* toetsenbordhoogte volgen zodat vaste balken (Iets onthouden) boven het toetsenbord blijven */
+(function(){
+  if(!window.visualViewport) return;
+  const vv=window.visualViewport;
+  function adjust(){
+    const kb=Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    document.documentElement.style.setProperty("--kb",(kb>40? kb:0)+"px");
+  }
+  vv.addEventListener("resize",adjust);
+  vv.addEventListener("scroll",adjust);
+  adjust();
+})();
 
 /* energie opnieuw meten bij heropenen na 2+ uur (max 4 metingen per dag) */
 function maybeReaskEnergy(){
@@ -1473,6 +1675,7 @@ function taskItemEl(t,isToday){
   const em=ENERGY_META[t.energy];
   const div=document.createElement("div");
   div.className="task-item"; div.style.borderLeftColor=em.color;
+  div.dataset.id=t.id;
   const rep=repeatLabel(t);
   const subs=[];
   if(rep) subs.push("🔁 "+rep);
@@ -1613,6 +1816,7 @@ function openWizard(opts){
   syncWizUI();
   $("#wizBackdrop").classList.add("open");
   gotoWizStep(opts.name && !opts.edit ? 2 : 1);
+  setTimeout(()=>autoGrow($("#wizName")),0);
 }
 function closeWizard(){ $("#wizBackdrop").classList.remove("open"); }
 $("#wizCancel").addEventListener("click",closeWizard);
@@ -1659,12 +1863,14 @@ function syncWizUI(){
 }
 
 /* stap 1 */
+function autoGrow(el){ el.style.height="auto"; el.style.height=(el.scrollHeight+3)+"px"; }
+$("#wizName").addEventListener("input",()=>autoGrow($("#wizName")));
 $("#wiz1Next").addEventListener("click",()=>{
   const v=$("#wizName").value.trim();
   if(!v){ toast("Geef je taak een naam"); return; }
   wiz.name=v; gotoWizStep(2);
 });
-$("#wizName").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#wiz1Next").click(); });
+$("#wizName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); $("#wiz1Next").click(); } });
 
 /* stap 2 */
 $$('#wizBackdrop [data-energy]').forEach(b=>b.addEventListener("click",()=>{
@@ -1844,6 +2050,39 @@ $("#tasksQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter") quickAdd
    ===================================================== */
 const BRAIN_CATS=["Werk","Computer & tech","Financiën","Fotografie","Joa","Huishouden","Persoonlijk","verzekering","films & series"];
 let brainQuery="";
+let brainOpenCats=new Set();   // welke categorieën open staan (standaard: alles ingeklapt)
+function journalTextHits(q){
+  const dates=new Set(Object.keys(dayHistory));
+  if(day.date) dates.add(day.date);
+  const hits=[];
+  Array.from(dates).sort().reverse().forEach(ds=>{
+    const d=journalDayData(ds); if(!d) return;
+    const snips=[];
+    (d.energy||[]).forEach(m=>{
+      if(m.notitie && m.notitie.toLowerCase().includes(q)) snips.push(timeFromIso(m.t)+" · "+m.notitie);
+    });
+    if(d.dayNote && d.dayNote.toLowerCase().includes(q)) snips.push("Dagnotitie · "+d.dayNote);
+    if(snips.length) hits.push({date:ds, snips});
+  });
+  return hits;
+}
+function flashTask(id){
+  setTimeout(()=>{
+    const el=document.querySelector('.task-item[data-id="'+id+'"]');
+    if(el){ el.classList.add("flash"); if(el.scrollIntoView) el.scrollIntoView({block:"center"}); setTimeout(()=>el.classList.remove("flash"),1700); }
+  },60);
+}
+function revealNote(id){
+  const n=notes.find(x=>x.id===id);
+  if(!n){ toast("Notitie niet gevonden op dit toestel"); return; }
+  brainQuery=""; $("#brainSearch").value="";
+  brainOpenCats.add(BRAIN_CATS.includes(n.cat)? n.cat : "Overig");
+  renderBrain();
+  setTimeout(()=>{
+    const el=document.querySelector('.note-item[data-id="'+id+'"]');
+    if(el){ el.classList.remove("collapsed"); el.classList.add("flash"); if(el.scrollIntoView) el.scrollIntoView({block:"center"}); setTimeout(()=>el.classList.remove("flash"),1700); }
+  },60);
+}
 function renderBrain(){
   /* parkeergedachten bovenaan */
   const pb=$("#brainParkedBlock"); pb.innerHTML="";
@@ -1851,29 +2090,83 @@ function renderBrain(){
     pb.insertAdjacentHTML("beforeend",'<div class="note-cat"><span class="label">GEPARKEERDE GEDACHTEN</span></div>');
     day.parked.forEach(p=>pb.appendChild(parkedEl(p,"brain")));
   }
-  /* notities per categorie */
   const nb=$("#brainNotesBlock"); nb.innerHTML="";
-  const q=brainQuery.toLowerCase();
+  const q=brainQuery.toLowerCase().trim();
+
+  /* zoektreffers buiten de notities: taken + dagboek */
+  let extraHits=false;
+  if(q){
+    const taskHits=tasks.filter(t=>!t.done && t.name.toLowerCase().includes(q));
+    if(taskHits.length){
+      extraHits=true;
+      nb.insertAdjacentHTML("beforeend",'<div class="note-cat"><span class="label">TAKEN</span></div>');
+      taskHits.forEach(t=>{
+        const em=ENERGY_META[t.energy]||ENERGY_META.normal;
+        const b=document.createElement("button");
+        b.className="jhit-task"; b.style.borderLeftColor=em.color;
+        b.innerHTML='<div class="name">'+esc(t.name)+'</div>'
+          +'<div class="sub">'+em.emoji+' '+em.naam+' · '+t.minutes+' min · tik om naar Taken te gaan</div>';
+        b.addEventListener("click",()=>{ setTab("tasks"); renderTasksTab(); showScreen("screen-tasks"); flashTask(t.id); });
+        nb.appendChild(b);
+      });
+    }
+    const dagHits=journalTextHits(q);
+    if(dagHits.length){
+      extraHits=true;
+      nb.insertAdjacentHTML("beforeend",'<div class="note-cat"><span class="label">DAGBOEK</span></div>');
+      dagHits.forEach(h=>{
+        const b=document.createElement("button");
+        b.className="jday-result";
+        b.innerHTML='<div class="dt">'+esc(journalTitle(h.date))+'</div>'
+          +h.snips.map(s=>'<div class="nt">'+esc(s)+'</div>').join("");
+        b.addEventListener("click",()=>openJournal("brain",h.date));
+        nb.appendChild(b);
+      });
+    }
+  }
+
+  /* notities per categorie — dicht = compacte tegel in het rooster, open = volledige sectie */
   const filtered=notes.filter(n=>!q || n.text.toLowerCase().includes(q) || (n.cat||"").toLowerCase().includes(q));
-  let any=false;
+  const cats=[];
   BRAIN_CATS.forEach(cat=>{
     const list=filtered.filter(n=>n.cat===cat);
-    if(!list.length) return;
-    any=true;
-    nb.insertAdjacentHTML("beforeend",'<div class="note-cat"><span class="label">'+esc(cat.toUpperCase())+'</span></div>');
-    list.forEach(n=>nb.appendChild(noteEl(n)));
+    if(list.length) cats.push([cat, cat.toUpperCase(), list]);
   });
   const rest=filtered.filter(n=>!BRAIN_CATS.includes(n.cat));
-  if(rest.length){
-    any=true;
-    nb.insertAdjacentHTML("beforeend",'<div class="note-cat"><span class="label">OVERIG</span></div>');
-    rest.forEach(n=>nb.appendChild(noteEl(n)));
+  if(rest.length) cats.push(["Overig","OVERIG",rest]);
+  const any=cats.length>0;
+  const closed = cats.filter(([k])=> !q && !brainOpenCats.has(k));
+  const openCats = cats.filter(([k])=> q || brainOpenCats.has(k));
+  if(closed.length){
+    const grid=document.createElement("div"); grid.className="cat-grid";
+    closed.forEach(([k,label,list])=>{
+      const chip=document.createElement("button");
+      chip.className="cat-chip";
+      chip.innerHTML='<span class="lbl">'+esc(label)+'</span><span class="cnt">'+list.length+'</span>';
+      chip.addEventListener("click",()=>{ brainOpenCats.add(k); renderBrain(); });
+      grid.appendChild(chip);
+    });
+    nb.appendChild(grid);
   }
-  if(!any) nb.insertAdjacentHTML("beforeend",'<p class="empty-note">'+(q? "Niets gevonden voor \u201C"+esc(brainQuery)+"\u201D.":"Nog niets onthouden. Typ hieronder je eerste hersenspinsel.")+'</p>');
+  openCats.forEach(([k,label,list])=>{
+    const head=document.createElement("div"); head.className="note-cat";
+    const btn=document.createElement("button");
+    btn.className="cat-toggle open";
+    btn.innerHTML='<span class="chev">▸</span><span class="label">'+esc(label)+'</span><span class="cnt">'+list.length+'</span>';
+    btn.addEventListener("click",()=>{
+      if(q) return; /* tijdens zoeken staat alles met treffers open */
+      brainOpenCats.delete(k);
+      renderBrain();
+    });
+    head.appendChild(btn); nb.appendChild(head);
+    list.forEach(n=>nb.appendChild(noteEl(n)));
+  });
+  if(!any && !extraHits) nb.insertAdjacentHTML("beforeend",'<p class="empty-note">'+(q? "Niets gevonden voor \u201C"+esc(brainQuery)+"\u201D.":"Nog niets onthouden. Typ hieronder je eerste hersenspinsel.")+'</p>');
 }
 function noteEl(n){
   const div=document.createElement("div");
   div.className="note-item collapsed";
+  div.dataset.id=n.id;
   const d=new Date(n.created+"T12:00:00");
   const datum=isNaN(d)? n.created : d.getDate()+" "+MAANDEN[d.getMonth()];
   div.innerHTML='<div class="prev">'+esc(n.text)+'</div><div class="date">'+esc(datum)+'</div>'
@@ -1916,16 +2209,30 @@ $("#brainAiSettingsBtn").addEventListener("click",configApiKey);
 
 async function aiSearch(query){
   if(!getApiKey()){
-    return "Nog geen AI-sleutel ingesteld. Tik op ⚙️ hierboven om je Anthropic API-sleutel toe te voegen (dezelfde als in Extern Brein).";
+    return {antwoord:"Nog geen AI-sleutel ingesteld. Tik op ⚙️ hierboven om je Anthropic API-sleutel toe te voegen (dezelfde als in Extern Brein).", kandidaten:[]};
   }
-  const source = allSheetItems.length ? allSheetItems : [
-    ...tasks.map(t=>({Type:"taak",Inhoud:t.name,Categorie:t.category,Datum:t.created})),
-    ...notes.map(n=>({Type:"notitie",Inhoud:n.text,Categorie:n.cat,Datum:n.created}))
-  ];
-  const all=source.map(i=>`${i.Type||"item"}: ${i.Inhoud} (${i.Categorie||"?"}, ${(i.Datum||"?").slice(0,10)})`).join("\n");
-  const prompt_="Je bent een persoonlijke assistent. Beantwoord de volgende zoekvraag aan de hand van de items. "
-    +"Spreek Nederlands, wees beknopt en vriendelijk. Noem geen technische ID's of codes — verwijs naar items "
-    +"met hun eigen omschrijving, niet met een code tussen haakjes.\n\nVraag: \""+query+"\"\n\nItems:\n"+all;
+  /* bronnen: Sheet-items + lokale items die (nog) niet in de Sheet staan + dagboekteksten */
+  const seen=new Set(); const items=[];
+  allSheetItems.forEach(r=>{
+    if(r.ID) seen.add(r.ID);
+    items.push({id:r.ID||"", type:r.Type||"item", tekst:r.Inhoud||"", cat:r.Categorie||"", datum:(r.Datum||"").slice(0,10)});
+  });
+  tasks.forEach(t=>{ if(!seen.has(t.id)) items.push({id:t.id, type:"taak", tekst:t.name, cat:t.category||"", datum:t.created||""}); });
+  notes.forEach(n=>{ if(!seen.has(n.id)) items.push({id:n.id, type:"notitie", tekst:n.text, cat:n.cat||"", datum:n.created||""}); });
+  const dates=new Set(Object.keys(dayHistory)); if(day.date) dates.add(day.date);
+  Array.from(dates).sort().reverse().forEach(ds=>{
+    const d=journalDayData(ds); if(!d) return;
+    (d.energy||[]).forEach(m=>{ if(m.notitie) items.push({id:"dag:"+ds, type:"dagboek (energie)", tekst:m.notitie, cat:"", datum:ds}); });
+    if(d.dayNote) items.push({id:"dag:"+ds, type:"dagboek (dagnotitie)", tekst:d.dayNote, cat:"", datum:ds});
+  });
+  const all=items.map(i=>i.id+" | "+i.type+" | "+(i.datum||"?")+" | "+i.tekst+(i.cat? " ("+i.cat+")":"")).join("\n");
+  const prompt_="Je bent de zoekhulp van een persoonlijke notitie-app. De gebruiker zoekt iets; jij bepaalt welke items "
+    +"waarschijnlijk bedoeld worden, ook als de zoekterm er niet letterlijk in staat (context, synoniemen).\n"
+    +"Antwoord UITSLUITEND met geldige JSON, zonder codeblok of toelichting, in dit formaat:\n"
+    +'{"antwoord":"korte vriendelijke reactie in het Nederlands","kandidaten":[{"id":"...","label":"korte omschrijving van het item"}]}\n'
+    +"Regels: maximaal 5 kandidaten, alleen items die echt kunnen passen; gebruik exact het id uit de eerste kolom; "
+    +"noem geen id's of codes in het antwoord-veld; geen kandidaten gevonden = lege lijst.\n\n"
+    +'Zoekvraag: "'+query+'"\n\nItems (id | type | datum | tekst):\n'+all;
   try{
     const r=await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",
@@ -1935,37 +2242,83 @@ async function aiSearch(query){
         "anthropic-version":"2023-06-01",
         "anthropic-dangerous-direct-browser-access":"true"
       },
-      body:JSON.stringify({model:"claude-haiku-4-5-20251001", max_tokens:500, messages:[{role:"user",content:prompt_}]})
+      body:JSON.stringify({model:"claude-haiku-4-5-20251001", max_tokens:700, messages:[{role:"user",content:prompt_}]})
     });
     if(!r.ok) throw new Error(String(r.status));
     const d=await r.json();
-    return d.content[0].text.trim();
-  } catch(e){ return "Kon AI niet bereiken. Controleer je API-sleutel en internetverbinding."; }
+    const raw=d.content[0].text.trim();
+    try{
+      const clean=raw.replace(/```json|```/g,"").trim();
+      const parsed=JSON.parse(clean);
+      return {antwoord:String(parsed.antwoord||""), kandidaten:Array.isArray(parsed.kandidaten)? parsed.kandidaten:[]};
+    } catch(e){ return {antwoord:raw, kandidaten:[]}; }
+  } catch(e){ return {antwoord:"Kon AI niet bereiken. Controleer je API-sleutel en internetverbinding.", kandidaten:[]}; }
+}
+function openAiCandidate(c){
+  const id=String(c.id||"");
+  if(id.startsWith("dag:")){ openJournal("brain", id.slice(4)); return; }
+  if(notes.find(n=>n.id===id)){ revealNote(id); return; }
+  if(tasks.find(t=>t.id===id)){ setTab("tasks"); renderTasksTab(); showScreen("screen-tasks"); flashTask(id); return; }
+  toast("Dit item staat alleen in je Extern Brein-app");
 }
 async function runBrainAiSearch(){
   const q=$("#brainSearch").value.trim();
   if(!q) return;
-  const box=$("#brainAiAnswer"); const btn=$("#brainAskBtn");
+  const box=$("#brainAiAnswer"); const btn=$("#brainAskBtn"); const cands=$("#brainAiCands");
   box.style.display="block"; box.className="ai-answer loading"; box.textContent="Even denken…";
+  cands.innerHTML="";
   btn.disabled=true;
-  const answer=await aiSearch(q);
-  box.className="ai-answer"; box.textContent=answer;
+  const res=await aiSearch(q);
+  box.className="ai-answer"; box.textContent=res.antwoord;
+  res.kandidaten.slice(0,5).forEach(c=>{
+    const b=document.createElement("button");
+    b.className="ai-cand";
+    b.innerHTML='<div class="t">'+esc(c.label||c.id||"?")+'</div><div class="r">tik om te openen</div>';
+    b.addEventListener("click",()=>openAiCandidate(c));
+    cands.appendChild(b);
+  });
   btn.disabled=false;
 }
 $("#brainAskBtn").addEventListener("click",runBrainAiSearch);
 $("#brainSearch").addEventListener("keydown",e=>{ if(e.key==="Enter") runBrainAiSearch(); });
+/* ---- toevoegen: eerst tekst, dan categorie kiezen ---- */
+let pendingNoteText=null;
+function openCatSheet(text){
+  pendingNoteText=text;
+  $("#catPreview").textContent=text;
+  const grid=$("#catGrid"); grid.innerHTML="";
+  BRAIN_CATS.forEach(c=>{
+    const b=document.createElement("button");
+    b.className="opt-btn"; b.textContent=c;
+    b.addEventListener("click",()=>saveNoteWithCat(c));
+    grid.appendChild(b);
+  });
+  $("#catBackdrop").classList.add("open");
+}
+function closeCatSheet(){ $("#catBackdrop").classList.remove("open"); pendingNoteText=null; }
+function saveNoteWithCat(cat){
+  if(!pendingNoteText) return;
+  const n={id:uid(), text:pendingNoteText, cat, created:todayStr()};
+  notes.unshift(n);
+  persistNotes();
+  closeCatSheet();
+  brainQuery=""; $("#brainSearch").value="";
+  brainOpenCats.add(cat);
+  renderBrain(); toast("Onthouden ✓ · "+cat);
+  pushNoteAdd(n);
+}
+$("#catCancel").addEventListener("click",closeCatSheet);
+$("#catBackdrop").addEventListener("click",e=>{ if(e.target.id==="catBackdrop") closeCatSheet(); });
 function brainAdd(){
   const v=$("#brainQuickAdd").value.trim();
   if(!v) return;
-  const n={id:uid(),text:v,cat:$("#brainCatSelect").value,created:todayStr()};
-  notes.unshift(n);
-  persistNotes();
   $("#brainQuickAdd").value="";
-  renderBrain(); toast("Onthouden ✓");
-  pushNoteAdd(n);
+  autoGrow($("#brainQuickAdd"));
+  openCatSheet(v);
 }
+$("#brainQuickAdd").addEventListener("input",()=>autoGrow($("#brainQuickAdd")));
 $("#brainQuickAddBtn").addEventListener("click",brainAdd);
-$("#brainQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter") brainAdd(); });
+$("#brainQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); brainAdd(); } });
 
 /* =====================================================
    4. FOCUS
@@ -2184,6 +2537,180 @@ $("#close3Next").addEventListener("click",()=>{
   day.dayNote=$("#closeDayNote").value.trim(); persistDay();
   showScreen("screen-close4");
 });
+
+/* =====================================================
+   6. DAGBOEK / GESCHIEDENIS
+   ===================================================== */
+const FEEL_META={
+  zwaar:{emoji:"🩶",naam:"Zwaar",cls:"ball-heavy"},
+  oke:  {emoji:"🩷",naam:"Oké",  cls:"ball-ok"},
+  trots:{emoji:"💚",naam:"Trots",cls:"ball-proud"}
+};
+let journalDate=todayStr();
+let journalReturn="close";   // "close" | "start" — waar de terugknop naartoe gaat
+let journalLevel=null;       // filter in zoekmodus
+
+/* dag-gegevens: vandaag komt live uit `day`, eerdere dagen uit het archief */
+function journalDayData(dateStr){
+  if(day.date && dateStr===day.date){
+    return {energy:day.energy||[], completed:day.completed||[], feeling:day.feeling||null, dayNote:day.dayNote||""};
+  }
+  return dayHistory[dateStr]||null;
+}
+function journalTitle(dateStr){
+  const d=new Date(dateStr+"T12:00:00");
+  if(isNaN(d)) return dateStr;
+  const naam=DAGEN[d.getDay()];
+  return naam.charAt(0).toUpperCase()+naam.slice(1)+" "+d.getDate()+" "+MAANDEN[d.getMonth()]+" "+d.getFullYear();
+}
+function timeFromIso(iso){
+  const d=new Date(iso);
+  return isNaN(d)? "" : pad(d.getHours())+":"+pad(d.getMinutes());
+}
+function openJournal(from,dateStr){
+  journalReturn=from||"close";
+  journalDate=dateStr||todayStr();
+  setJournalMode("day");
+  showScreen("screen-journal");
+}
+function setJournalMode(m){
+  $("#jModeDay").classList.toggle("selected", m==="day");
+  $("#jModeSearch").classList.toggle("selected", m==="search");
+  $("#jDayMode").style.display = m==="day" ? "block":"none";
+  $("#jSearchMode").style.display = m==="search" ? "block":"none";
+  if(m==="day") renderJournalDay(); else renderJournalSearch();
+}
+function journalEntryEmpty(d){
+  return !(d.energy&&d.energy.length) && !(d.completed&&d.completed.length)
+    && !d.feeling && !(d.dayNote&&d.dayNote.trim());
+}
+function journalMutate(dateStr,fn){
+  if(day.date && dateStr===day.date){ fn(day); persistDay(); }
+  else if(dayHistory[dateStr]){
+    fn(dayHistory[dateStr]);
+    if(journalEntryEmpty(dayHistory[dateStr])) delete dayHistory[dateStr];
+    persistHistory();
+  }
+  renderJournalDay();
+}
+function deleteJournalEnergy(dateStr,idx){
+  if(!confirm("Deze energiemeting verwijderen? Dit kan niet ongedaan worden gemaakt.")) return;
+  journalMutate(dateStr,d=>{ (d.energy||[]).splice(idx,1); });
+  toast("Meting verwijderd");
+}
+function deleteJournalClose(dateStr){
+  if(!confirm("De dagafsluiting van deze dag verwijderen (gevoel + dagnotitie)? Dit kan niet ongedaan worden gemaakt.")) return;
+  journalMutate(dateStr,d=>{ d.feeling=null; d.dayNote=""; });
+  toast("Dagafsluiting verwijderd");
+}
+function renderJournalDay(){
+  $("#jTitle").textContent=journalTitle(journalDate);
+  const dp=$("#jDatePick");
+  dp.value=journalDate; dp.max=todayStr();
+  $("#jNext").disabled = journalDate>=todayStr();
+  const c=$("#jDayContent"); c.innerHTML="";
+  const d=journalDayData(journalDate);
+  const hasData = d && !journalEntryEmpty(d);
+  if(!hasData){
+    c.innerHTML='<p class="empty-note" style="text-align:center;padding:28px 8px">Geen gegevens voor deze dag.</p>';
+    return;
+  }
+  if(d.energy && d.energy.length){
+    c.insertAdjacentHTML("beforeend",'<div class="jsection"><span class="label">ENERGIEMETINGEN</span></div>');
+    d.energy.forEach((m,idx)=>{
+      const lm=LEVEL_META[m.niveau]||{emoji:"🔋",naam:m.niveau||"?"};
+      const item=document.createElement("div");
+      item.className="jenergy-item";
+      item.innerHTML='<span class="ico">'+lm.emoji+'</span>'
+        +'<span class="bd"><span class="lvl">'+esc(lm.naam)+'</span>'
+        +(m.notitie? '<div class="nt">'+esc(m.notitie)+'</div>':'')
+        +'</span><span class="tm">'+timeFromIso(m.t)+'</span>'
+        +'<button class="icon-btn jdel" title="Verwijder deze meting">🗑️</button>';
+      item.querySelector(".jdel").addEventListener("click",()=>deleteJournalEnergy(journalDate,idx));
+      c.appendChild(item);
+    });
+  }
+  if(d.completed && d.completed.length){
+    c.insertAdjacentHTML("beforeend",'<div class="jsection"><span class="label">VOLTOOIDE TAKEN</span></div>');
+    d.completed.forEach(x=>{
+      c.insertAdjacentHTML("beforeend",
+        '<div class="done-item"><span class="chk">✓</span><span class="nm">'+esc(x.naam)
+        +'</span><span class="tm">'+esc(x.tijd||"")+'</span></div>');
+    });
+  }
+  if(d.feeling || (d.dayNote && d.dayNote.trim())){
+    c.insertAdjacentHTML("beforeend",'<div class="jsection"><span class="label">DAGAFSLUITING</span></div>');
+    const fm=d.feeling? FEEL_META[d.feeling] : null;
+    const card=document.createElement("div");
+    card.className="jfeel-card";
+    card.innerHTML=(fm? '<span class="ball '+fm.cls+'"></span>':'')
+      +'<span class="bd"><span class="lvl">'
+      +(fm? fm.emoji+' '+fm.naam : 'Geen gevoel gekozen')+'</span>'
+      +(d.dayNote && d.dayNote.trim()? '<div class="nt">'+esc(d.dayNote)+'</div>':'')
+      +'</span><button class="icon-btn jdel" title="Verwijder dagafsluiting">🗑️</button>';
+    card.querySelector(".jdel").addEventListener("click",()=>deleteJournalClose(journalDate));
+    c.appendChild(card);
+  }
+}
+function renderJournalSearch(){
+  const box=$("#jSearchResults");
+  $$("#jSearchMode [data-jlevel]").forEach(b=>b.classList.toggle("selected", b.dataset.jlevel===journalLevel));
+  if(!journalLevel){
+    box.innerHTML='<p class="empty-note">Kies een energieniveau om dagen terug te vinden.</p>';
+    return;
+  }
+  const dates=new Set(Object.keys(dayHistory));
+  if(day.date) dates.add(day.date);
+  const hits=[];
+  Array.from(dates).sort().reverse().forEach(ds=>{
+    const d=journalDayData(ds);
+    if(!d || !d.energy) return;
+    const matches=d.energy.filter(m=>m.niveau===journalLevel);
+    if(!matches.length) return;
+    hits.push({ds, matches, done:(d.completed||[]).length});
+  });
+  box.innerHTML="";
+  if(!hits.length){
+    box.innerHTML='<p class="empty-note">Geen dagen gevonden met energie \u201C'
+      +esc(LEVEL_META[journalLevel].naam.toLowerCase())+'\u201D.</p>';
+    return;
+  }
+  hits.forEach(h=>{
+    const btn=document.createElement("button");
+    btn.className="jday-result";
+    const noteTexts=h.matches.filter(m=>m.notitie).map(m=>
+      '<div class="nt">'+timeFromIso(m.t)+' · '+esc(m.notitie)+'</div>').join("");
+    btn.innerHTML='<div class="dt">'+esc(journalTitle(h.ds))+'</div>'
+      +'<div class="sm">'+h.matches.length+'× '+esc(LEVEL_META[journalLevel].naam.toLowerCase())
+      +' · '+h.done+' '+(h.done===1?'taak':'taken')+' voltooid</div>'
+      +noteTexts;
+    btn.addEventListener("click",()=>{ journalDate=h.ds; setJournalMode("day"); });
+    box.appendChild(btn);
+  });
+}
+$("#jModeDay").addEventListener("click",()=>setJournalMode("day"));
+$("#jModeSearch").addEventListener("click",()=>setJournalMode("search"));
+$("#jPrev").addEventListener("click",()=>{ journalDate=addDays(journalDate,-1); renderJournalDay(); });
+$("#jNext").addEventListener("click",()=>{
+  if(journalDate<todayStr()){ journalDate=addDays(journalDate,1); renderJournalDay(); }
+});
+$("#jDatePick").addEventListener("change",()=>{
+  const v=$("#jDatePick").value;
+  if(!v) return;
+  journalDate = v>todayStr() ? todayStr() : v;
+  renderJournalDay();
+});
+$$("#jSearchMode [data-jlevel]").forEach(b=>b.addEventListener("click",()=>{
+  journalLevel=b.dataset.jlevel;
+  renderJournalSearch();
+}));
+$("#journalBack").addEventListener("click",()=>{
+  if(journalReturn==="start"){ setTab("start"); gotoStart(); }
+  else if(journalReturn==="brain"){ setTab("brain"); renderBrain(); showScreen("screen-brain"); }
+  else { setTab("close"); startClose(); }
+});
+$("#close1Journal").addEventListener("click",()=>openJournal("close"));
+$("#homeJournal").addEventListener("click",()=>openJournal("start"));
 
 /* =====================================================
    INIT
