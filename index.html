@@ -345,15 +345,36 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 .note-item .date{color:var(--text-secondary);font-size:.76rem;margin-top:6px}
 .note-item .btns{display:flex;gap:6px;margin-top:9px}
 .brain-add{
+  display:none;
   position:fixed;left:50%;transform:translateX(-50%);
   width:100%;max-width:480px;
   bottom:calc(54px + env(safe-area-inset-bottom) + var(--kb,0px));
   padding:10px 18px;background:rgba(240,242,247,.94);backdrop-filter:blur(8px);
   border-top:1px solid #E4E8F0;z-index:40;transition:bottom .15s ease;
 }
+.brain-add.show{display:block}
 .brain-add .add-inline{margin-top:0}
-.brain-add .add-inline input{box-shadow:var(--shadow-card)}
-#screen-brain{padding-bottom:76px}
+.brain-add .add-inline textarea{
+  flex:1;background:var(--bg-card);border:1.5px solid #E4E8F0;border-radius:var(--radius-btn);
+  padding:12px 14px;min-height:48px;box-shadow:var(--shadow-card);
+}
+#screen-brain{padding-bottom:96px}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 14px}
+.cat-chip{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:var(--bg-card);border:1.5px solid #E4E8F0;border-radius:var(--radius-btn);
+  padding:11px 13px;min-height:48px;text-align:left;transition:transform .12s;
+}
+.cat-chip:active{transform:scale(.97)}
+.cat-chip .lbl{
+  font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-label);font-weight:700;font-family:var(--font-head);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.cat-chip .cnt{
+  color:var(--text-secondary);font-weight:700;font-size:.72rem;font-family:var(--font-head);
+  background:var(--bg-card-accent);border-radius:999px;padding:2px 9px;flex:none;
+}
 .cat-select{width:100%;margin-top:8px}
 
 /* ---------- focus ---------- */
@@ -446,7 +467,15 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   color:var(--text-secondary);transition:color .15s;overflow:hidden;padding-top:2px;
 }
-.tab .ico{font-size:1.05rem;line-height:1.15}
+.tab .ico{
+  font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;
+  height:24px;min-width:46px;border-radius:999px;
+  filter:grayscale(1);opacity:.5;
+  transition:background .15s,transform .15s,filter .15s,opacity .15s;
+}
+.tab.active .ico{
+  filter:none;opacity:1;background:rgba(52,120,246,.14);transform:scale(1.06);
+}
 .tab-label{font-size:.6rem;font-weight:700;letter-spacing:.02em;line-height:1.1}
 .tab.active{color:var(--accent-blue)}
 
@@ -673,12 +702,6 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   <div class="ai-cands" id="brainAiCands"></div>
   <div id="brainParkedBlock"></div>
   <div id="brainNotesBlock"></div>
-  <div class="brain-add">
-    <div class="add-inline">
-      <input type="text" id="brainQuickAdd" placeholder="Iets onthouden…">
-      <button id="brainQuickAddBtn" aria-label="Notitie toevoegen">＋</button>
-    </div>
-  </div>
 </section>
 
 <!-- ========== 4a FOCUS INTRO ========== -->
@@ -837,6 +860,14 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 </section>
 
 </main>
+
+<!-- ========== IETS ONTHOUDEN (vaste balk, alleen op Brein) ========== -->
+<div class="brain-add" id="brainAddBar">
+  <div class="add-inline">
+    <textarea class="wiz-grow" id="brainQuickAdd" rows="1" placeholder="Iets onthouden…"></textarea>
+    <button id="brainQuickAddBtn" aria-label="Notitie toevoegen">＋</button>
+  </div>
+</div>
 
 <!-- ========== BOTTOM NAV ========== -->
 <nav class="bottomnav">
@@ -1273,6 +1304,7 @@ function showScreen(id){
   $("#"+id).classList.add("active");
   if(id==="screen-choose") $$(".choose-card").forEach(c=>c.classList.remove("selected"));
   currentScreen=id;
+  const bar=$("#brainAddBar"); if(bar) bar.classList.toggle("show", id==="screen-brain");
   const mn=$("#main"); if(mn) mn.scrollTop=0;
   window.scrollTo(0,0);
 }
@@ -1327,6 +1359,8 @@ $$("#screen-energy .energy-choice").forEach(btn=>btn.addEventListener("click",()
   btn.classList.add("selected");
   chosenLevel=btn.dataset.level;
   $("#energyNext").disabled=false;
+  const nf=$("#energyNote");
+  if(nf && nf.scrollIntoView) nf.scrollIntoView({block:"center",behavior:"smooth"});
 }));
 $("#energyNext").addEventListener("click",()=>{
   if(!chosenLevel) return;
@@ -2091,30 +2125,42 @@ function renderBrain(){
     }
   }
 
-  /* notities per categorie — inklapbaar, bij zoeken automatisch open */
+  /* notities per categorie — dicht = compacte tegel in het rooster, open = volledige sectie */
   const filtered=notes.filter(n=>!q || n.text.toLowerCase().includes(q) || (n.cat||"").toLowerCase().includes(q));
-  let any=false;
-  function renderCat(catKey,catLabel,list){
-    any=true;
-    const open = q ? true : brainOpenCats.has(catKey);
+  const cats=[];
+  BRAIN_CATS.forEach(cat=>{
+    const list=filtered.filter(n=>n.cat===cat);
+    if(list.length) cats.push([cat, cat.toUpperCase(), list]);
+  });
+  const rest=filtered.filter(n=>!BRAIN_CATS.includes(n.cat));
+  if(rest.length) cats.push(["Overig","OVERIG",rest]);
+  const any=cats.length>0;
+  const closed = cats.filter(([k])=> !q && !brainOpenCats.has(k));
+  const openCats = cats.filter(([k])=> q || brainOpenCats.has(k));
+  if(closed.length){
+    const grid=document.createElement("div"); grid.className="cat-grid";
+    closed.forEach(([k,label,list])=>{
+      const chip=document.createElement("button");
+      chip.className="cat-chip";
+      chip.innerHTML='<span class="lbl">'+esc(label)+'</span><span class="cnt">'+list.length+'</span>';
+      chip.addEventListener("click",()=>{ brainOpenCats.add(k); renderBrain(); });
+      grid.appendChild(chip);
+    });
+    nb.appendChild(grid);
+  }
+  openCats.forEach(([k,label,list])=>{
     const head=document.createElement("div"); head.className="note-cat";
     const btn=document.createElement("button");
-    btn.className="cat-toggle"+(open?" open":"");
-    btn.innerHTML='<span class="chev">▸</span><span class="label">'+esc(catLabel)+'</span><span class="cnt">'+list.length+'</span>';
+    btn.className="cat-toggle open";
+    btn.innerHTML='<span class="chev">▸</span><span class="label">'+esc(label)+'</span><span class="cnt">'+list.length+'</span>';
     btn.addEventListener("click",()=>{
       if(q) return; /* tijdens zoeken staat alles met treffers open */
-      if(brainOpenCats.has(catKey)) brainOpenCats.delete(catKey); else brainOpenCats.add(catKey);
+      brainOpenCats.delete(k);
       renderBrain();
     });
     head.appendChild(btn); nb.appendChild(head);
-    if(open) list.forEach(n=>nb.appendChild(noteEl(n)));
-  }
-  BRAIN_CATS.forEach(cat=>{
-    const list=filtered.filter(n=>n.cat===cat);
-    if(list.length) renderCat(cat, cat.toUpperCase(), list);
+    list.forEach(n=>nb.appendChild(noteEl(n)));
   });
-  const rest=filtered.filter(n=>!BRAIN_CATS.includes(n.cat));
-  if(rest.length) renderCat("Overig","OVERIG",rest);
   if(!any && !extraHits) nb.insertAdjacentHTML("beforeend",'<p class="empty-note">'+(q? "Niets gevonden voor \u201C"+esc(brainQuery)+"\u201D.":"Nog niets onthouden. Typ hieronder je eerste hersenspinsel.")+'</p>');
 }
 function noteEl(n){
@@ -2267,10 +2313,12 @@ function brainAdd(){
   const v=$("#brainQuickAdd").value.trim();
   if(!v) return;
   $("#brainQuickAdd").value="";
+  autoGrow($("#brainQuickAdd"));
   openCatSheet(v);
 }
+$("#brainQuickAdd").addEventListener("input",()=>autoGrow($("#brainQuickAdd")));
 $("#brainQuickAddBtn").addEventListener("click",brainAdd);
-$("#brainQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter") brainAdd(); });
+$("#brainQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); brainAdd(); } });
 
 /* =====================================================
    4. FOCUS
