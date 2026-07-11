@@ -136,7 +136,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 .energy-choice[data-level="hoog"].selected{border-color:var(--energy-intense);background:#F7F3FF}
 .note-field{
   width:100%;margin-top:14px;background:var(--bg-card);border:1.5px solid #E4E8F0;
-  border-radius:var(--radius-btn);padding:12px 14px;resize:none;min-height:64px;
+  border-radius:var(--radius-btn);padding:12px 14px;resize:none;min-height:64px;overflow:hidden;
 }
 .choose-cards{display:flex;flex-direction:column;gap:14px;margin-top:8px}
 .choose-card{
@@ -199,7 +199,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 .step-row .txt{flex:1;font-size:.95rem;line-height:1.4;overflow-wrap:anywhere}
 .step-row.done .txt{color:var(--text-secondary);text-decoration:line-through}
 .add-inline{display:flex;gap:8px;margin-top:16px}
-.add-inline input{
+.add-inline input,.add-inline textarea{
   flex:1;background:var(--bg-card);border:1.5px solid #E4E8F0;border-radius:var(--radius-btn);
   padding:12px 14px;min-height:48px;
 }
@@ -359,17 +359,19 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   padding:12px 14px;min-height:48px;box-shadow:var(--shadow-card);
 }
 #screen-brain{padding-bottom:96px}
-.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 14px}
+.cat-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:6px 0 14px}
 .cat-chip{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   background:var(--bg-card);border:1.5px solid #E4E8F0;border-radius:var(--radius-btn);
   padding:11px 13px;min-height:48px;text-align:left;transition:transform .12s;
+  min-width:0;
 }
 .cat-chip:active{transform:scale(.97)}
 .cat-chip .lbl{
   font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
   color:var(--text-label);font-weight:700;font-family:var(--font-head);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  min-width:0;flex:1;
 }
 .cat-chip .cnt{
   color:var(--text-secondary);font-weight:700;font-size:.72rem;font-family:var(--font-head);
@@ -408,7 +410,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   padding:12px 14px;margin-bottom:190px;
 }
 .zone-park .row{display:flex;gap:8px;align-items:center}
-.zone-park input{flex:1;border:1.5px solid #E4E8F0;border-radius:11px;padding:11px 13px;min-height:46px;background:var(--bg-card)}
+.zone-park input,.zone-park textarea{flex:1;border:1.5px solid #E4E8F0;border-radius:11px;padding:11px 13px;min-height:46px;background:var(--bg-card)}
 .zone-park .btn-blue{width:auto;flex:none;min-height:46px;padding:10px 16px}
 .timer-controls{
   position:fixed;bottom:calc(54px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
@@ -667,7 +669,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   </div>
   <div id="homeTaskArea"></div>
   <div class="add-inline" style="margin-top:auto;padding-top:18px">
-    <input type="text" id="homeQuickAdd" placeholder="Nieuwe taak toevoegen…">
+    <textarea class="wiz-grow" id="homeQuickAdd" rows="1" placeholder="Nieuwe taak toevoegen…"></textarea>
     <button id="homeQuickAddBtn" aria-label="Taak toevoegen">＋</button>
   </div>
   <button class="btn-link" id="homeJournal" style="align-self:center;margin-top:4px">📖 Geschiedenis</button>
@@ -683,7 +685,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   <div id="tasksParkedBlock"></div>
   <div id="tasksAllBlock"></div>
   <div class="add-inline" style="margin-top:18px">
-    <input type="text" id="tasksQuickAdd" placeholder="Nieuwe taak toevoegen…">
+    <textarea class="wiz-grow" id="tasksQuickAdd" rows="1" placeholder="Nieuwe taak toevoegen…"></textarea>
     <button id="tasksQuickAddBtn" aria-label="Taak toevoegen">＋</button>
   </div>
 </section>
@@ -757,7 +759,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
         <button class="steps-toggle open" id="faStepsToggle"><span class="chev">▸</span> Microstappen</button>
         <div class="steps-list open" id="faStepsList"></div>
         <div class="add-inline" style="margin-top:10px">
-          <input type="text" id="faStepAdd" placeholder="Nieuwe stap toevoegen…">
+          <textarea class="wiz-grow" id="faStepAdd" rows="1" placeholder="Nieuwe stap toevoegen…"></textarea>
           <button id="faStepAddBtn" aria-label="Stap toevoegen">＋</button>
         </div>
         <div class="mini-progress" id="faMiniProgress"></div>
@@ -770,7 +772,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
       <div class="zone-park">
         <div class="label" style="margin-bottom:8px">☆ PARKEER EEN GEDACHTE</div>
         <div class="row">
-          <input type="text" id="faParkInput" placeholder="Parkeer een gedachte…">
+          <textarea class="wiz-grow" id="faParkInput" rows="1" placeholder="Parkeer een gedachte…"></textarea>
           <button class="btn btn-blue" id="faParkSave">Bewaar</button>
         </div>
       </div>
@@ -1008,7 +1010,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
       <div id="wizStepsEditor" style="display:none;margin-top:14px">
         <div class="micro-list" id="wizMicroList"></div>
         <div class="add-inline">
-          <input type="text" id="wizStepInput" placeholder="Stap beschrijven…">
+          <textarea class="wiz-grow" id="wizStepInput" rows="1" placeholder="Stap beschrijven…"></textarea>
           <button id="wizStepAddBtn" aria-label="Stap toevoegen">＋</button>
         </div>
       </div>
@@ -1038,6 +1040,10 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
     <div class="wiz-sub">Tik een categorie — je notitie wordt dan meteen opgeslagen.</div>
     <div class="catsheet-preview" id="catPreview"></div>
     <div class="catsheet-grid" id="catGrid"></div>
+    <div class="add-inline" style="margin-top:12px">
+      <input type="text" id="catCustom" placeholder="Of typ een nieuwe categorie…">
+      <button id="catCustomBtn" aria-label="Nieuwe categorie gebruiken">＋</button>
+    </div>
     <div class="wiz-nav">
       <button class="btn-link back" id="catCancel">Annuleer</button>
     </div>
@@ -1153,13 +1159,8 @@ function renderSyncBadge(){
 
 async function sheetPost(body){
   try{
-    /* Geen Content-Type-header zetten: bij een string-body kiest fetch dan
-       zelf text/plain, wat een "simple request" is (geen preflight). Zet je
-       hier application/json neer, dan stuurt de browser een OPTIONS-preflight
-       die Apps Script niet beantwoordt en wordt het hele verzoek geblokkeerd. */
-    const r = await fetch(SHEETS_URL, { method:"POST", body: JSON.stringify(body) });
-    const data = await r.json();
-    return !!(data && data.ok);
+    await fetch(SHEETS_URL, { method:"POST", mode:"no-cors", body: JSON.stringify(body) });
+    return true;
   } catch(e){ return false; }
 }
 async function queueOrSend(body){
@@ -1179,30 +1180,6 @@ async function flushSyncQueue(){
   }
   syncQueue=remaining; persistSyncQueue();
   setSyncState(syncQueue.length? "offline":"ok");
-}
-
-/* ---- eenmalige achterstallige-items check ----
-   Door een oude bug (no-cors POST) werden mislukte schrijfacties niet
-   herkend en dus nooit in syncQueue teruggezet. Items die lokaal bestaan
-   maar niet in de Sheet staan, alsnog versturen — één keer per apparaat. */
-const RESYNC_MISSING_KEY = "focusapp_resync_missing_v1";
-async function resyncMissingItems(){
-  if(!sheetsReady()) return 0;
-  const sheetIds = new Set(allSheetItems.map(r=>r.ID));
-  let count=0;
-  for(const t of tasks){
-    if(!sheetIds.has(t.id)){ if(await sheetPost({action:"add", item:taskToSheetItemFull(t)})) count++; }
-  }
-  for(const n of notes){
-    if(!sheetIds.has(n.id)){ if(await sheetPost({action:"add", item:noteToSheetItemFull(n)})) count++; }
-  }
-  return count;
-}
-async function resyncMissingItemsOnce(){
-  if(!sheetsReady() || localStorage.getItem(RESYNC_MISSING_KEY)) return;
-  const count = await resyncMissingItems();
-  localStorage.setItem(RESYNC_MISSING_KEY, "1");
-  if(count) toast(count+" achterstallig item(s) alsnog verstuurd naar Extern Brein");
 }
 
 /* ---- mapping: taak <-> sheet-item ---- */
@@ -1379,6 +1356,7 @@ function renderEnergyScreen(soft){
   $("#energyGreeting").textContent=greetingText();
   $("#energyDate").textContent=dateText();
   $("#energyNote").value="";
+  autoGrow($("#energyNote"));
   $("#energyNext").disabled=true;
   $$("#screen-energy .energy-choice").forEach(b=>b.classList.remove("selected"));
   $("#energyNext").textContent = soft ? "Opslaan →" : "Verder →";
@@ -1425,6 +1403,12 @@ $("#energyNote").addEventListener("focus",()=>enterTyping("screen-energy"));
 $("#energyNote").addEventListener("blur",()=>leaveTyping("screen-energy"));
 $("#closeDayNote").addEventListener("focus",()=>enterTyping("screen-close3"));
 $("#closeDayNote").addEventListener("blur",()=>leaveTyping("screen-close3"));
+
+/* meegroeiende invulvelden: hoogte volgt de tekst */
+["#energyNote","#closeDayNote","#homeQuickAdd","#tasksQuickAdd","#wizStepInput","#faStepAdd","#faParkInput"].forEach(sel=>{
+  const el=$(sel);
+  if(el) el.addEventListener("input",()=>autoGrow(el));
+});
 
 /* toetsenbordhoogte volgen zodat vaste balken (Iets onthouden) boven het toetsenbord blijven */
 (function(){
@@ -1992,11 +1976,12 @@ function wizAddStep(){
   if(!v) return;
   wiz.steps.push({text:v,done:false});
   $("#wizStepInput").value="";
+  autoGrow($("#wizStepInput"));
   renderWizSteps();
   $("#wizStepInput").focus();
 }
 $("#wizStepAddBtn").addEventListener("click",wizAddStep);
-$("#wizStepInput").addEventListener("keydown",e=>{ if(e.key==="Enter") wizAddStep(); });
+$("#wizStepInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); wizAddStep(); } });
 $("#wiz5Next").addEventListener("click",()=>gotoWizStep(6));
 
 /* stap 6 — samenvatting & opslaan */
@@ -2060,12 +2045,13 @@ $("#wizSave").addEventListener("click",()=>{
 function quickAddHandler(inputId){
   const v=$(inputId).value.trim();
   $(inputId).value="";
+  autoGrow($(inputId));
   openWizard(v? {name:v}:{});
 }
 $("#homeQuickAddBtn").addEventListener("click",()=>quickAddHandler("#homeQuickAdd"));
-$("#homeQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter") quickAddHandler("#homeQuickAdd"); });
+$("#homeQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); quickAddHandler("#homeQuickAdd"); } });
 $("#tasksQuickAddBtn").addEventListener("click",()=>quickAddHandler("#tasksQuickAdd"));
-$("#tasksQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter") quickAddHandler("#tasksQuickAdd"); });
+$("#tasksQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); quickAddHandler("#tasksQuickAdd"); } });
 
 /* maanddagen vullen */
 (function(){
@@ -2078,6 +2064,15 @@ $("#tasksQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter") quickAdd
    3. BREIN
    ===================================================== */
 const BRAIN_CATS=["Werk","Computer & tech","Financiën","Fotografie","Joa","Huishouden","Persoonlijk","verzekering","films & series"];
+/* dynamisch: basislijst + alle categorieën die in de Sheet of lokale notities voorkomen */
+function brainCats(){
+  const base=BRAIN_CATS.slice();
+  const set=new Set(base);
+  const extra=new Set();
+  allSheetItems.forEach(r=>{ const c=String(r.Categorie||"").trim(); if(c && !set.has(c)) extra.add(c); });
+  notes.forEach(n=>{ const c=String(n.cat||"").trim(); if(c && !set.has(c)) extra.add(c); });
+  return base.concat(Array.from(extra).sort((a,b)=>a.localeCompare(b,"nl")));
+}
 let brainQuery="";
 let brainOpenCats=new Set();   // welke categorieën open staan (standaard: alles ingeklapt)
 function journalTextHits(q){
@@ -2105,7 +2100,7 @@ function revealNote(id){
   const n=notes.find(x=>x.id===id);
   if(!n){ toast("Notitie niet gevonden op dit toestel"); return; }
   brainQuery=""; $("#brainSearch").value="";
-  brainOpenCats.add(BRAIN_CATS.includes(n.cat)? n.cat : "Overig");
+  brainOpenCats.add(brainCats().includes(n.cat)? n.cat : "Overig");
   renderBrain();
   setTimeout(()=>{
     const el=document.querySelector('.note-item[data-id="'+id+'"]');
@@ -2157,11 +2152,12 @@ function renderBrain(){
   /* notities per categorie — dicht = compacte tegel in het rooster, open = volledige sectie */
   const filtered=notes.filter(n=>!q || n.text.toLowerCase().includes(q) || (n.cat||"").toLowerCase().includes(q));
   const cats=[];
-  BRAIN_CATS.forEach(cat=>{
+  const CATS=brainCats();
+  CATS.forEach(cat=>{
     const list=filtered.filter(n=>n.cat===cat);
     if(list.length) cats.push([cat, cat.toUpperCase(), list]);
   });
-  const rest=filtered.filter(n=>!BRAIN_CATS.includes(n.cat));
+  const rest=filtered.filter(n=>!CATS.includes(n.cat));
   if(rest.length) cats.push(["Overig","OVERIG",rest]);
   const any=cats.length>0;
   const closed = cats.filter(([k])=> !q && !brainOpenCats.has(k));
@@ -2211,9 +2207,11 @@ function noteEl(n){
     div.innerHTML="";
     const ta=document.createElement("textarea");
     ta.className="note-field"; ta.style.marginTop="0"; ta.value=n.text;
+    ta.addEventListener("input",()=>autoGrow(ta));
+    setTimeout(()=>autoGrow(ta),0);
     const selCat=document.createElement("select");
     selCat.className="sel-input cat-select";
-    BRAIN_CATS.forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; if(c===n.cat)o.selected=true; selCat.appendChild(o); });
+    brainCats().forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; if(c===n.cat)o.selected=true; selCat.appendChild(o); });
     const row=document.createElement("div"); row.className="row"; row.style.cssText="display:flex;gap:8px;margin-top:9px";
     const ok=document.createElement("button"); ok.className="btn btn-blue"; ok.textContent="Opslaan"; ok.style.minHeight="42px";
     const cancel=document.createElement("button"); cancel.className="btn btn-ghost"; cancel.textContent="Annuleer"; cancel.style.minHeight="42px";
@@ -2315,8 +2313,9 @@ let pendingNoteText=null;
 function openCatSheet(text){
   pendingNoteText=text;
   $("#catPreview").textContent=text;
+  $("#catCustom").value="";
   const grid=$("#catGrid"); grid.innerHTML="";
-  BRAIN_CATS.forEach(c=>{
+  brainCats().forEach(c=>{
     const b=document.createElement("button");
     b.className="opt-btn"; b.textContent=c;
     b.addEventListener("click",()=>saveNoteWithCat(c));
@@ -2336,6 +2335,13 @@ function saveNoteWithCat(cat){
   renderBrain(); toast("Onthouden ✓ · "+cat);
   pushNoteAdd(n);
 }
+function catCustomSave(){
+  const v=$("#catCustom").value.trim();
+  if(!v) return;
+  saveNoteWithCat(v);
+}
+$("#catCustomBtn").addEventListener("click",catCustomSave);
+$("#catCustom").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); catCustomSave(); } });
 $("#catCancel").addEventListener("click",closeCatSheet);
 $("#catBackdrop").addEventListener("click",e=>{ if(e.target.id==="catBackdrop") closeCatSheet(); });
 function brainAdd(){
@@ -2437,10 +2443,11 @@ function faAddStep(){
   const v=$("#faStepAdd").value.trim(); if(!v) return;
   t.steps=t.steps||[]; t.steps.push({text:v,done:false});
   persistTasks(); $("#faStepAdd").value="";
+  autoGrow($("#faStepAdd"));
   renderFocusSteps(t);
 }
 $("#faStepAddBtn").addEventListener("click",faAddStep);
-$("#faStepAdd").addEventListener("keydown",e=>{ if(e.key==="Enter") faAddStep(); });
+$("#faStepAdd").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); faAddStep(); } });
 
 /* timer-motor */
 function startTicking(){
@@ -2522,9 +2529,10 @@ $("#faParkSave").addEventListener("click",()=>{
   if(day.parked.length>=10){ toast("Parkeerlijst is vol (max 10) — ruim eerst op"); return; }
   day.parked.push({id:uid(),tekst:v,t:new Date().toISOString()});
   persistDay(); $("#faParkInput").value="";
+  autoGrow($("#faParkInput"));
   toast("☆ Gedachte geparkeerd");
 });
-$("#faParkInput").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#faParkSave").click(); });
+$("#faParkInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); $("#faParkSave").click(); } });
 
 /* =====================================================
    5. DAGAFSLUITING
@@ -2560,6 +2568,7 @@ $("#close2Next").addEventListener("click",()=>{
   word.textContent= closeFeel==="oke"?"oké":closeFeel;
   word.className="feel-word "+closeFeel;
   $("#closeDayNote").value=day.dayNote||"";
+  setTimeout(()=>autoGrow($("#closeDayNote")),0);
   showScreen("screen-close3");
 });
 $("#close3Next").addEventListener("click",()=>{
@@ -2763,7 +2772,7 @@ function init(){
   setTab("start");
   gotoStart();
   maybeReaskEnergy();
-  syncFromSheet().then(resyncMissingItemsOnce);
+  syncFromSheet();
 }
 $("#syncBadge").addEventListener("click",()=>{ if(syncState==="offline") flushSyncQueue(); });
 init();
