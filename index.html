@@ -1072,6 +1072,16 @@ const pad = n => String(n).padStart(2,"0");
 const todayStr = () => { const d=new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); };
 const addDays = (str,n) => { const d=new Date(str+"T12:00:00"); d.setDate(d.getDate()+n); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); };
 const esc = t => String(t).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const CAT_EMOJI = {'Computer & tech':'💻','Huishouden':'🏠','Werk':'💼',
+                    'Koken & eten':'🍳','Joa':'💛','Persoonlijk':'🧍',
+                    'Fotografie':'📷','Financiën':'💰'};
+function catEmoji(c) {
+  if (/^\p{Extended_Pictographic}/u.test(c || '')) return '';
+  return CAT_EMOJI[c] || '📌';
+}
+function catLabel(c) {
+  return [catEmoji(c), c].filter(Boolean).join(' ');
+}
 const DAGEN = ["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
 const MAANDEN = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
 const WD_KORT = ["zo","ma","di","wo","do","vr","za"];
@@ -2155,7 +2165,7 @@ function renderBrain(){
   const CATS=brainCats();
   CATS.forEach(cat=>{
     const list=filtered.filter(n=>n.cat===cat);
-    if(list.length) cats.push([cat, cat.toUpperCase(), list]);
+    if(list.length) cats.push([cat, catLabel(cat).toUpperCase(), list]);
   });
   const rest=filtered.filter(n=>!CATS.includes(n.cat));
   if(rest.length) cats.push(["Overig","OVERIG",rest]);
@@ -2211,7 +2221,7 @@ function noteEl(n){
     setTimeout(()=>autoGrow(ta),0);
     const selCat=document.createElement("select");
     selCat.className="sel-input cat-select";
-    brainCats().forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; if(c===n.cat)o.selected=true; selCat.appendChild(o); });
+    brainCats().forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=catLabel(c); if(c===n.cat)o.selected=true; selCat.appendChild(o); });
     const row=document.createElement("div"); row.className="row"; row.style.cssText="display:flex;gap:8px;margin-top:9px";
     const ok=document.createElement("button"); ok.className="btn btn-blue"; ok.textContent="Opslaan"; ok.style.minHeight="42px";
     const cancel=document.createElement("button"); cancel.className="btn btn-ghost"; cancel.textContent="Annuleer"; cancel.style.minHeight="42px";
@@ -2317,7 +2327,7 @@ function openCatSheet(text){
   const grid=$("#catGrid"); grid.innerHTML="";
   brainCats().forEach(c=>{
     const b=document.createElement("button");
-    b.className="opt-btn"; b.textContent=c;
+    b.className="opt-btn"; b.textContent=catLabel(c);
     b.addEventListener("click",()=>saveNoteWithCat(c));
     grid.appendChild(b);
   });
