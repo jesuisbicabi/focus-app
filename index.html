@@ -515,7 +515,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 .check-overlay p{color:var(--text-secondary)}
 
 /* ---------- dagboek / geschiedenis ---------- */
-.journal-toggle{display:flex;gap:8px;margin-bottom:16px}
+.journal-toggle{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
 .journal-toggle .chip{flex:1;display:flex;align-items:center;justify-content:center;text-align:center}
 .journal-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .journal-nav .icon-btn{width:44px;height:44px;font-size:1.1rem}
@@ -870,6 +870,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   <div class="journal-toggle">
     <button class="chip selected" id="jModeDay">📅 Per dag</button>
     <button class="chip" id="jModeSearch">🔍 Zoek op energie</button>
+    <button class="chip" id="jModeTask">📝 Zoek op taak</button>
   </div>
   <div id="jDayMode">
     <div class="journal-nav">
@@ -891,6 +892,12 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
       <button class="opt-btn sel-intense" data-jlevel="hoog">⚡ Hoog</button>
     </div>
     <div id="jSearchResults" style="margin-top:12px"><p class="empty-note">Kies een energieniveau om dagen terug te vinden.</p></div>
+  </div>
+  <div id="jTaskSearchMode" style="display:none">
+    <div class="search-bar">
+      🔍<input type="text" id="jTaskSearchInput" placeholder="Zoek een taak…">
+    </div>
+    <div id="jTaskSearchResults" style="margin-top:12px"><p class="empty-note">Typ een taaknaam om te zoeken.</p></div>
   </div>
 </section>
 
@@ -1843,8 +1850,15 @@ function archiveItemEl(t){
   });
   return div;
 }
+let archiveCollapsed=load("focusapp_archive_collapsed", {});
+function toggleArchiveGroup(key){
+  archiveCollapsed[key]=!archiveCollapsed[key];
+  save("focusapp_archive_collapsed", archiveCollapsed);
+  renderArchive();
+}
 function renderArchive(){
   const box=$("#archiveBlock"); box.innerHTML="";
+  const q=archiveQuery.toLowerCase().trim();
   const groups=archiveGroups();
   if(!groups.length){
     box.innerHTML='<p class="empty-note">'+(archiveQuery? "Niets gevonden voor “"+esc(archiveQuery)+"”.":"Nog geen voltooide taken.")+'</p>';
@@ -1860,9 +1874,17 @@ function renderArchive(){
       const list=g[ekey];
       if(!list || !list.length) return;
       list.sort((a,b)=>a.doneAt<b.doneAt?1:-1);
-      box.insertAdjacentHTML("beforeend",'<div class="task-group-title"><span class="label">'+elabel+' ('+list.length+')</span></div>');
-      list.forEach(t=>box.appendChild(archiveItemEl(t)));
+      const groupKey=key+":"+ekey;
+      const collapsed=!q && !!archiveCollapsed[groupKey];
+      box.insertAdjacentHTML("beforeend",
+        '<div class="task-group-title group-header" data-group="'+groupKey+'">'
+        +'<span class="label">'+elabel+' ('+list.length+')</span>'
+        +'<span class="chevron">'+(collapsed?"▸":"▾")+'</span></div>');
+      if(!collapsed) list.forEach(t=>box.appendChild(archiveItemEl(t)));
     });
+  });
+  box.querySelectorAll(".group-header").forEach(el=>{
+    el.addEventListener("click",()=>toggleArchiveGroup(el.dataset.group));
   });
 }
 function openArchive(){
@@ -2883,9 +2905,13 @@ function openJournal(from,dateStr){
 function setJournalMode(m){
   $("#jModeDay").classList.toggle("selected", m==="day");
   $("#jModeSearch").classList.toggle("selected", m==="search");
+  $("#jModeTask").classList.toggle("selected", m==="task");
   $("#jDayMode").style.display = m==="day" ? "block":"none";
   $("#jSearchMode").style.display = m==="search" ? "block":"none";
-  if(m==="day") renderJournalDay(); else renderJournalSearch();
+  $("#jTaskSearchMode").style.display = m==="task" ? "block":"none";
+  if(m==="day") renderJournalDay();
+  else if(m==="search") renderJournalSearch();
+  else renderJournalTaskSearch();
 }
 function journalEntryEmpty(d){
   return !(d.energy&&d.energy.length) && !(d.completed&&d.completed.length)
@@ -2996,8 +3022,41 @@ function renderJournalSearch(){
     box.appendChild(btn);
   });
 }
+let journalTaskQuery="";
+function renderJournalTaskSearch(){
+  const box=$("#jTaskSearchResults");
+  const q=journalTaskQuery.toLowerCase().trim();
+  if(!q){
+    box.innerHTML='<p class="empty-note">Typ een taaknaam om te zoeken.</p>';
+    return;
+  }
+  const dates=new Set(Object.keys(dayHistory));
+  if(day.date) dates.add(day.date);
+  const hits=[];
+  Array.from(dates).sort().reverse().forEach(ds=>{
+    const d=journalDayData(ds);
+    if(!d || !d.completed) return;
+    const matches=d.completed.filter(c=>c.naam && c.naam.toLowerCase().includes(q));
+    if(matches.length) hits.push({ds, matches});
+  });
+  box.innerHTML="";
+  if(!hits.length){
+    box.innerHTML='<p class="empty-note">Geen dagen gevonden met een voltooide taak die “'+esc(journalTaskQuery)+'” bevat.</p>';
+    return;
+  }
+  hits.forEach(h=>{
+    const btn=document.createElement("button");
+    btn.className="jday-result";
+    const lines=h.matches.map(m=>'<div class="nt">'+esc(m.tijd||"")+' · '+esc(m.naam)+'</div>').join("");
+    btn.innerHTML='<div class="dt">'+esc(journalTitle(h.ds))+'</div>'+lines;
+    btn.addEventListener("click",()=>{ journalDate=h.ds; setJournalMode("day"); });
+    box.appendChild(btn);
+  });
+}
 $("#jModeDay").addEventListener("click",()=>setJournalMode("day"));
 $("#jModeSearch").addEventListener("click",()=>setJournalMode("search"));
+$("#jModeTask").addEventListener("click",()=>setJournalMode("task"));
+$("#jTaskSearchInput").addEventListener("input",()=>{ journalTaskQuery=$("#jTaskSearchInput").value; renderJournalTaskSearch(); });
 $("#jPrev").addEventListener("click",()=>{ journalDate=addDays(journalDate,-1); renderJournalDay(); });
 $("#jNext").addEventListener("click",()=>{
   if(journalDate<todayStr()){ journalDate=addDays(journalDate,1); renderJournalDay(); }
