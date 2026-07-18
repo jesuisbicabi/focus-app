@@ -513,3 +513,26 @@ De app draait als standalone HTML. Connector-aanroepen worden gedaan wanneer:
 * NAS project: `\\\\serverDS216\\Back-Up\\projecten\\focus-app\\`
 * Live URL: `https://jesuisbicabi.github.io/focus-app/`
 
+---
+
+## Voortgang — samenvoegplan (bijgewerkt door Claude Code, 19 juli 2026)
+
+Los van bovenstaande oorspronkelijke fasering loopt er een apart plan om focus-app, de inspreek-app (AI-agent) en Extern Brein samen te voegen. Opdracht gegeven via Claude-chat op 17 juli: fase 1 fix notitie→taak, fase 2 inspreken overzetten, fase 2b gedaan-archief, fase 3 inbox-stap eruit, fase 4 Extern Brein uitfaseren (pas na een week probleemloos draaien).
+
+### Gedaan (getest en live, commits t/m `f69b57c`)
+
+* **Fase 1 — notitie → taak**: ☑️ bij een notitie in de Brein-tab opent de taak-wizard vooringevuld; bij opslaan verdwijnt de notitie en wordt de categorie overgenomen als taak-categorie.
+* **Taak → notitie (omgekeerd)**: nieuwe 📝-knop bij taken doet het spiegelbeeld — opent het categoriekeuzescherm met de taaknaam vooringevuld, taak wordt bij opslaan verwijderd en verschijnt als notitie.
+* **Fase 2 — inspreken**: microfoonknop (🎙️) met spraak-naar-tekst + Claude-opmaak (verwijdert "eh"'s, haperingen, dubbele woorden), nu aanwezig in drie velden: "Iets onthouden" (Brein), de toelichting bij een energiemeting, en de dagnotitie bij Dagafsluiting. Gebruikt dezelfde Anthropic-sleutel als de bestaande AI-zoekfunctie (`eb_api_key`, in te stellen via ⚙️ bij Zoeken in Brein). **Werkt alleen in Chrome, niet in Firefox** (Web Speech API-beperking) — bevestigd werkend door de user zelf op haar telefoon.
+* **Inklapbare energie-groepen in Taken-tab**: chevron bij elke groep-header, klapt in/uit, persistent in localStorage; taken binnen een groep nieuwste-eerst gesorteerd.
+* **Groen icoon voor de Taken-tab** in de onderste navigatiebalk (eigen SVG i.p.v. de ☑️-emoji, die op de meeste toestellen grijs/wit rendert). Het ☑️-vinkje bij notities in Brein is bewust grijs gelaten — dat is het "nog geen taak"-signaal.
+* **"Alles openen"/"Alles sluiten"** voor de categorieën in de Brein-tab, naast het bestaande per-categorie klikgedrag (dat blijft ongewijzigd).
+* **Obsidian-koppeling voor de dagafsluiting-notitie**: schrijft energie/voltooide taken/dagnotitie naar het vitality-monitor-maandbestand in de `obsidian-vault`-repo (eigen GitHub-token, los van de Anthropic-sleutel). Let op: dit is een simpele/platte-tekst-koppeling — géén apart dagbestand per dag en géén Claude-opmaak zoals AI-agent dat wél doet voor het dagboek.
+
+### Nog te doen / bekende openstaande punten
+
+* **Fase 2b** (gedaan-archief: zoeken + per categorie), **fase 3** (inbox-stap eruit) en **fase 4** (Extern Brein uitfaseren) zijn nog niet gestart.
+* **Inspreken via het Samsung Galaxy Watch (Wear OS)** — bewust geparkeerd op verzoek van de user. Wear OS heeft geen volwaardige browser, dus de huidige mic-knop werkt daar niet. Drie richtingen besproken (workaround via bestaande Wear OS-notitie-app / voice-routine naar de bestaande "connector"-Cloudflare-Worker / eigen native Wear OS-app), nog geen keuze gemaakt.
+* De drie microfoonvelden zijn met een neptranscript en gemockte AI-respons getest (logica klopt, inclusief twee kleine bugs die zijn gefixt: blijven hangen van een knop bij wisselen tussen microfoons, en een placeholder die op "Aan het luisteren…" bleef staan). **Echte spraakherkenning is niet automatisch te testen** — dat heeft de user zelf gedaan voor de Brein-mic (werkt), de twee nieuwe velden (energie-toelichting, dagnotitie) zijn nog niet apart door haar bevestigd.
+* Drie bestanden staan nog untracked in de werkmap en horen niet in git: `github_pat_11B5U37AY0EzxGZ6jg50C1_s.txt` (plaintext GitHub-token, wacht op revoke door de user) en twee gespreklogs (`10-07-26 Code gesprek.txt`, `10-07-26 Fable gesprek.txt`).
+* Oudere openstaande punten uit `EERST-LEZEN-focus-app.md` (bv. de sync-bug rond het schrijven naar de Google Sheet) zijn in deze sessie niet opnieuw gecontroleerd — status daarvan is dus onbekend, niet per ongeluk als "opgelost" lezen.
