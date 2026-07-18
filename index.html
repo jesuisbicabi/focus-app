@@ -221,6 +221,8 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 .today-chip{font-size:.85rem;color:var(--text-secondary)}
 .today-chip a{color:var(--accent-blue);font-weight:700;text-decoration:none}
 .task-group-title{margin:20px 0 8px;display:flex;align-items:center;gap:7px}
+.group-header{cursor:pointer;user-select:none;justify-content:space-between}
+.group-header .chevron{color:var(--text-secondary);font-size:.7rem;transition:transform .15s}
 .task-item{
   background:var(--bg-card);border-radius:var(--radius-card);box-shadow:var(--shadow-card);
   padding:13px 14px;display:flex;flex-direction:column;gap:10px;margin-bottom:10px;
@@ -850,6 +852,10 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
     </div>
     <div class="journal-datepick"><input type="date" class="date-input" id="jDatePick"></div>
     <div id="jDayContent"></div>
+    <div style="text-align:center;margin-top:18px">
+      <div class="empty-note" id="obsStatus" style="text-align:center;padding:0 0 2px"></div>
+      <button class="btn-link" id="obsSetup">🔗 Obsidian-koppeling</button>
+    </div>
   </div>
   <div id="jSearchMode" style="display:none">
     <div class="opt-grid cols3" style="margin-bottom:4px">
@@ -1292,6 +1298,10 @@ function checkNewDay(){
         dayNote:   day.dayNote||""
       };
       persistHistory();
+      if(!journalEntryEmpty(dayHistory[day.date]) && !obsWritten[day.date] && !obsQueue.includes(day.date)){
+        obsQueue.push(day.date);
+        persistObs();
+      }
     }
     day = {date:t, energy:[], todayTasks:[], completed:[], parked:day.parked||[],
            feeling:null, dagstartDone:false, focusSec:0, dayNote:""};
@@ -1444,7 +1454,7 @@ function maybeReaskEnergy(){
     renderEnergyScreen(true); setTab("start"); showScreen("screen-energy");
   }
 }
-document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ checkNewDay(); maybeReaskEnergy(); tickTimer(); syncFromSheet(); } });
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ checkNewDay(); maybeReaskEnergy(); tickTimer(); syncFromSheet(); processObsidianQueue(); } });
 
 /* ---------- taak-kandidaten & scoring ---------- */
 function openTasks(){
@@ -1647,6 +1657,12 @@ function repeatLabel(t){
   return null;
 }
 let showCompletedList=false;
+let collapsedGroups=load("focusapp_collapsed_groups", {});
+function toggleGroup(key){
+  collapsedGroups[key]=!collapsedGroups[key];
+  save("focusapp_collapsed_groups", collapsedGroups);
+  renderTasksTab();
+}
 function renderTasksTab(){
   const doneIds=new Set(day.completed.map(c=>c.id));
 
@@ -1686,11 +1702,18 @@ function renderTasksTab(){
   const groups=[["easy","🟢 MAKKELIJK"],["normal","🔵 NORMAAL"],["intense","🟣 INTENSIEF"]];
   let any=false;
   groups.forEach(([key,title])=>{
-    const list=open.filter(t=>t.energy===key);
+    const list=open.filter(t=>t.energy===key).sort((a,b)=>a.id<b.id?1:-1);
     if(!list.length) return;
     any=true;
-    ab.insertAdjacentHTML("beforeend",'<div class="task-group-title"><span class="label">'+title+'</span></div>');
-    list.forEach(t=>ab.appendChild(taskItemEl(t,false)));
+    const collapsed=!!collapsedGroups[key];
+    ab.insertAdjacentHTML("beforeend",
+      '<div class="task-group-title group-header" data-group="'+key+'">'
+      +'<span class="label">'+title+' ('+list.length+')</span>'
+      +'<span class="chevron">'+(collapsed?"▸":"▾")+'</span></div>');
+    if(!collapsed) list.forEach(t=>ab.appendChild(taskItemEl(t,false)));
+  });
+  ab.querySelectorAll(".group-header").forEach(el=>{
+    el.addEventListener("click",()=>toggleGroup(el.dataset.group));
   });
   if(!any && !open.length) ab.insertAdjacentHTML("beforeend",'<p class="empty-note">Nog geen open taken. Voeg er hieronder één toe.</p>');
 }
@@ -1818,7 +1841,7 @@ function blankWiz(){
   return {editId:null, name:"", energy:null, minutes:null,
     day:"none", dayDate:"", dead:"none", deadDate:"",
     rep:"once", weekdays:[], monthday:1, customN:"", customUnit:"days", repMode:"after",
-    steps:[]};
+    steps:[], noteId:null, category:""};
 }
 function openWizard(opts){
   opts=opts||{};
@@ -1835,6 +1858,7 @@ function openWizard(opts){
     wiz.repMode=r.mode||"after";
   }
   if(opts.name){ wiz.name=opts.name; }
+  if(opts.noteId){ wiz.noteId=opts.noteId; wiz.category=opts.cat||""; }
   $("#wizName").value=wiz.name;
   syncWizUI();
   $("#wizBackdrop").classList.add("open");
@@ -2033,6 +2057,7 @@ $("#wizSave").addEventListener("click",()=>{
     deadline:resolveDate(wiz.dead,wiz.deadDate),
     repeat:buildRepeat(), steps:wiz.steps.map(s=>({text:s.text,done:!!s.done}))
   };
+  if(wiz.category) data.category=wiz.category;
   let savedTask=null;
   if(wiz.editId){
     const t=tasks.find(x=>x.id===wiz.editId);
@@ -2042,12 +2067,19 @@ $("#wizSave").addEventListener("click",()=>{
     tasks.push(savedTask);
   }
   persistTasks();
+  const fromNoteId=wiz.noteId;
+  if(fromNoteId){
+    notes=notes.filter(x=>x.id!==fromNoteId);
+    persistNotes();
+    pushNoteDelete(fromNoteId);
+    renderBrain();
+  }
   closeWizard();
   showCheck("Toegevoegd.","Taak staat klaar in je takenlijst.",()=>{
     if(currentScreen==="screen-tasks") renderTasksTab();
     if(currentScreen==="screen-home") renderHome();
   });
-  toast(wiz.editId? "Taak bijgewerkt":"Taak opgeslagen ✓");
+  toast(fromNoteId ? "Taak aangemaakt · notitie opgeruimd ✓" : (wiz.editId? "Taak bijgewerkt":"Taak opgeslagen ✓"));
   if(savedTask){ wiz.editId ? pushTaskUpdate(savedTask) : pushTaskAdd(savedTask); }
 });
 
@@ -2212,7 +2244,7 @@ function noteEl(n){
   div.querySelector('[data-a="del"]').addEventListener("click",()=>{
     if(confirm("Notitie verwijderen?")){ notes=notes.filter(x=>x.id!==n.id); persistNotes(); renderBrain(); toast("Notitie verwijderd"); pushNoteDelete(n.id); }
   });
-  div.querySelector('[data-a="task"]').addEventListener("click",()=>openWizard({name:n.text.slice(0,120)}));
+  div.querySelector('[data-a="task"]').addEventListener("click",()=>openWizard({name:n.text.slice(0,120), noteId:n.id, cat:n.cat}));
   div.querySelector('[data-a="edit"]').addEventListener("click",()=>{
     div.innerHTML="";
     const ta=document.createElement("textarea");
@@ -2656,6 +2688,7 @@ function renderJournalDay(){
   const dp=$("#jDatePick");
   dp.value=journalDate; dp.max=todayStr();
   $("#jNext").disabled = journalDate>=todayStr();
+  updateObsStatus();
   const c=$("#jDayContent"); c.innerHTML="";
   const d=journalDayData(journalDate);
   const hasData = d && !journalEntryEmpty(d);
@@ -2761,6 +2794,114 @@ $("#close1Journal").addEventListener("click",()=>openJournal("close"));
 $("#homeJournal").addEventListener("click",()=>openJournal("start"));
 
 /* =====================================================
+   7. OBSIDIAN-KOPPELING (dagboek → vitality monitor)
+   ===================================================== */
+const GH_REPO_PATH="repos/jesuisbicabi/obsidian-vault";
+let obsQueue = load("focusapp_obsidian_queue", []);   // datums die nog weggeschreven moeten worden
+let obsWritten = load("focusapp_obsidian_written", {}); // {datum:true} — nooit dubbel schrijven
+function persistObs(){ save("focusapp_obsidian_queue", obsQueue); save("focusapp_obsidian_written", obsWritten); }
+function getGhToken(){ return localStorage.getItem("focusapp_gh_token") || ""; }
+function configGhToken(){
+  const k=prompt("GitHub-token voor je Obsidian-vault"
+    +(getGhToken()? " (al ingesteld — laat leeg om te behouden)":"")
+    +".\nMaak een fine-grained token op github.com → Settings → Developer settings, met alleen Contents-rechten (read/write) op de repo obsidian-vault. Heb je er al één voor VAAP, dan mag je diezelfde plakken.");
+  if(k && k.trim()){ localStorage.setItem("focusapp_gh_token", k.trim()); toast("✅ Obsidian gekoppeld"); processObsidianQueue(); }
+  else updateObsStatus();
+}
+function b64enc(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64dec(b){ return decodeURIComponent(escape(atob(String(b).replace(/\n/g,"")))); }
+function encPath(p){ return p.split("/").map(encodeURIComponent).join("/"); }
+function ghFetch(pathPart,opts){
+  return fetch("https://api.github.com/"+GH_REPO_PATH+"/"+pathPart, Object.assign({
+    headers:{ "Authorization":"Bearer "+getGhToken(), "Accept":"application/vnd.github+json" }
+  }, opts||{}));
+}
+/* zoek de map "vitality monitor" en het maandbestand van de gegeven datum in de vault */
+async function ghFindVitalityFile(dateStr){
+  const r=await ghFetch("git/trees/HEAD?recursive=1");
+  if(!r.ok) throw new Error("vault niet bereikbaar");
+  const tree=(await r.json()).tree||[];
+  const dir=tree.find(t=>t.type==="tree" && /(^|\/)vitality monitor$/i.test(t.path));
+  if(!dir) throw new Error("map 'vitality monitor' niet gevonden");
+  const yyyy=dateStr.slice(0,4), mm=dateStr.slice(5,7);
+  const files=tree.filter(t=>t.type==="blob"
+    && t.path.startsWith(dir.path+"/")
+    && !t.path.slice(dir.path.length+1).includes("/")
+    && t.path.toLowerCase().endsWith(".md"));
+  const file=files.find(t=>{
+    const n=t.path.split("/").pop();
+    return n.includes(mm+"-"+yyyy) || n.includes(yyyy+"-"+mm);
+  });
+  return { filePath: file? file.path : dir.path+"/"+mm+"-"+yyyy+".md", exists: !!file };
+}
+function buildDaySection(dateStr,d){
+  const lines=["## "+dateStr+" — Focus App dagboek",""];
+  if(d.energy && d.energy.length){
+    lines.push("**Energiemetingen**");
+    d.energy.forEach(m=>{
+      const lm=LEVEL_META[m.niveau]||{emoji:"🔋",naam:m.niveau||"?"};
+      lines.push("- "+timeFromIso(m.t)+" "+lm.emoji+" "+lm.naam+(m.notitie? " — "+m.notitie:""));
+    });
+    lines.push("");
+  }
+  if(d.completed && d.completed.length){
+    lines.push("**Voltooide taken**");
+    d.completed.forEach(x=>lines.push("- "+(x.tijd||"")+" "+x.naam+(x.min? " ("+x.min+" min)":"")));
+    lines.push("");
+  }
+  if(d.feeling || (d.dayNote && d.dayNote.trim())){
+    lines.push("**Dagafsluiting**");
+    if(d.feeling){ const fm=FEEL_META[d.feeling]; lines.push("- Gevoel: "+(fm? fm.emoji+" "+fm.naam : d.feeling)); }
+    if(d.dayNote && d.dayNote.trim()) lines.push("- Dagnotitie: "+d.dayNote.trim());
+    lines.push("");
+  }
+  return lines.join("\n").replace(/\n+$/,"")+"\n";
+}
+function updateObsStatus(){
+  const el=$("#obsStatus"); if(!el) return;
+  if(!getGhToken()) el.textContent="Obsidian: nog niet gekoppeld";
+  else if(obsQueue.length) el.textContent="Obsidian: "+obsQueue.length+" dag(en) in de wachtrij";
+  else if(Object.keys(obsWritten).length) el.textContent="Obsidian: bijgewerkt ✓";
+  else el.textContent="Obsidian: gekoppeld ✓ — schrijft bij de eerstvolgende dagwissel";
+}
+let obsBusy=false;
+async function processObsidianQueue(){
+  updateObsStatus();
+  if(obsBusy || !getGhToken() || !obsQueue.length) return;
+  obsBusy=true;
+  try{
+    for(const ds of obsQueue.slice()){
+      if(obsWritten[ds]){ obsQueue=obsQueue.filter(x=>x!==ds); persistObs(); continue; }
+      const d=dayHistory[ds];
+      if(!d || journalEntryEmpty(d)){ obsWritten[ds]=true; obsQueue=obsQueue.filter(x=>x!==ds); persistObs(); continue; }
+      const loc=await ghFindVitalityFile(ds);
+      let content="", sha=null;
+      if(loc.exists){
+        const r=await ghFetch("contents/"+encPath(loc.filePath));
+        if(!r.ok) throw new Error("lezen mislukt");
+        const j=await r.json();
+        content=b64dec(j.content); sha=j.sha;
+      }
+      const marker="## "+ds+" — Focus App dagboek";
+      if(!content.includes(marker)){
+        const newContent=(content? content.replace(/\s*$/,"")+"\n\n":"")+buildDaySection(ds,d);
+        const body={ message:"Focus App dagboek "+ds, content:b64enc(newContent) };
+        if(sha) body.sha=sha;
+        const r2=await ghFetch("contents/"+encPath(loc.filePath),{ method:"PUT", body:JSON.stringify(body) });
+        if(!r2.ok) throw new Error("schrijven mislukt");
+      }
+      obsWritten[ds]=true;
+      obsQueue=obsQueue.filter(x=>x!==ds);
+      persistObs();
+    }
+  } catch(e){ /* stil laten staan — volgende keer opnieuw proberen */ }
+  obsBusy=false;
+  persistObs();
+  updateObsStatus();
+}
+$("#obsSetup").addEventListener("click",configGhToken);
+
+/* =====================================================
    INIT
    ===================================================== */
 function init(){
@@ -2783,6 +2924,7 @@ function init(){
   gotoStart();
   maybeReaskEnergy();
   syncFromSheet();
+  processObsidianQueue();
 }
 $("#syncBadge").addEventListener("click",()=>{ if(syncState==="offline") flushSyncQueue(); });
 init();
