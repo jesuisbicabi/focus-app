@@ -4,3 +4,6 @@
 EERST-LEZEN-focus-app.md
 bouwopdracht-*.txt
 index.txt
+
+# GitHub-token-bestanden: nooit committen, bevatten een plaintext token
+github_pat_*.txt
