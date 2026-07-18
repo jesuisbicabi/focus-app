@@ -707,6 +707,9 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   </div>
   <div class="ai-answer" id="brainAiAnswer" style="display:none"></div>
   <div class="ai-cands" id="brainAiCands"></div>
+  <div style="text-align:right;margin:2px 0 0" id="brainToggleAllRow">
+    <button class="btn-link" id="brainToggleAllCats">Alles openen</button>
+  </div>
   <div id="brainParkedBlock"></div>
   <div id="brainNotesBlock"></div>
 </section>
@@ -2208,6 +2211,13 @@ function renderBrain(){
   const rest=filtered.filter(n=>!CATS.includes(n.cat));
   if(rest.length) cats.push(["Overig","OVERIG",rest]);
   const any=cats.length>0;
+  const toggleRow=$("#brainToggleAllRow");
+  if(!any || q){ toggleRow.style.display="none"; }
+  else{
+    toggleRow.style.display="block";
+    const allOpen = cats.every(([k])=>brainOpenCats.has(k));
+    $("#brainToggleAllCats").textContent = allOpen? "Alles sluiten" : "Alles openen";
+  }
   const closed = cats.filter(([k])=> !q && !brainOpenCats.has(k));
   const openCats = cats.filter(([k])=> q || brainOpenCats.has(k));
   if(closed.length){
@@ -2272,6 +2282,18 @@ function noteEl(n){
   return div;
 }
 $("#brainSearch").addEventListener("input",()=>{ brainQuery=$("#brainSearch").value; renderBrain(); });
+function toggleAllBrainCats(){
+  const CATS=brainCats();
+  const keys=[];
+  CATS.forEach(cat=>{ if(notes.some(n=>n.cat===cat)) keys.push(cat); });
+  if(notes.some(n=>!CATS.includes(n.cat))) keys.push("Overig");
+  if(!keys.length) return;
+  const allOpen = keys.every(k=>brainOpenCats.has(k));
+  if(allOpen) brainOpenCats.clear();
+  else keys.forEach(k=>brainOpenCats.add(k));
+  renderBrain();
+}
+$("#brainToggleAllCats").addEventListener("click", toggleAllBrainCats);
 
 /* ---------- AI-zoeken (zelfde aanpak als extern-brein: eigen Anthropic-sleutel, lokaal) ---------- */
 function getApiKey(){ return localStorage.getItem("eb_api_key") || ""; }
