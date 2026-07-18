@@ -210,6 +210,12 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 #brainMicBtn{background:var(--bg-card);color:var(--text-primary);border:1.5px solid #E4E8F0;font-size:1.15rem}
 #brainMicBtn.recording{background:#FDEAEA;border-color:#E24B4A;animation:micPulse 1s infinite}
 @keyframes micPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.mic-inline-btn{
+  margin-top:8px;padding:8px 14px;border-radius:999px;background:var(--bg-card-accent);
+  color:var(--text-primary);font-size:.85rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;
+}
+.mic-inline-btn.recording{background:#FDEAEA;color:#E24B4A;animation:micPulse 1s infinite}
+.mic-inline-btn:disabled{opacity:.4}
 .alldone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 0}
 .alldone .big-check{
   width:96px;height:96px;border-radius:50%;background:var(--accent-green);color:#fff;
@@ -615,6 +621,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   </div>
   <span class="pill" id="energyMini" style="display:none"></span>
   <textarea class="note-field" id="energyNote" placeholder="Korte toelichting (optioneel)…"></textarea>
+  <button class="mic-inline-btn" id="energyMicBtn" type="button" title="Spreek in">🎙️ Spreek in</button>
   <div class="wiz-nav">
     <button class="btn btn-blue" id="energyNext" disabled>Verder →</button>
   </div>
@@ -827,6 +834,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   <h2 style="text-align:center;font-size:1.4rem">De dag is voorbij.</h2>
   <p style="text-align:center;color:var(--text-secondary);margin-top:6px">Vandaag voelde <span class="feel-word" id="close3Word">oké</span>.</p>
   <textarea class="note-field" id="closeDayNote" placeholder="Notitie voor de dag (optioneel)…"></textarea>
+  <button class="mic-inline-btn" id="closeMicBtn" type="button" title="Spreek in">🎙️ Spreek in</button>
   <div style="margin-top:auto;padding-top:16px">
     <button class="btn btn-blue" id="close3Next">Afronden →</button>
   </div>
@@ -2435,68 +2443,84 @@ $("#brainQuickAdd").addEventListener("input",()=>autoGrow($("#brainQuickAdd")));
 $("#brainQuickAddBtn").addEventListener("click",brainAdd);
 $("#brainQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); brainAdd(); } });
 
-/* ---------- inspreken (Brein): spraak-naar-tekst + AI-opmaak, zelfde sleutel als "Vraag AI" ---------- */
-let brainRecognition=null, brainRecording=false, brainTranscript="";
-function startBrainRecording(){
+/* ---------- inspreken (herbruikbaar op elk tekstveld): spraak-naar-tekst + AI-opmaak, zelfde sleutel als "Vraag AI" ---------- */
+const MIC_BTN_IDS=["brainMicBtn","energyMicBtn","closeMicBtn"];
+let micRecognition=null, micRecording=false, micTranscript="", micTargetId=null, micBtnId=null;
+function startMicRecording(taId, btnId, idleLabel, recLabel){
+  idleLabel=idleLabel||"🎙️"; recLabel=recLabel||"⏹️";
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ toast("Spraakherkenning niet beschikbaar in deze browser"); return; }
-  brainRecognition=new SR();
-  brainRecognition.lang="nl-NL";
-  brainRecognition.continuous=true;
+  if(micRecording){
+    /* al een andere microfoonknop aan het opnemen: die stil afbreken (geen AI-opmaak erop loslaten) */
+    micRecording=false;
+    if(micRecognition){ micRecognition.onend=null; micRecognition.onerror=null; try{ micRecognition.stop(); } catch(e){} }
+    if(micBtnId){ const pb=$("#"+micBtnId); if(pb){ pb.classList.remove("recording"); pb.textContent=pb.dataset.idleLabel||"🎙️"; pb.disabled=false; } }
+    if(micTargetId){ const pta=$("#"+micTargetId); if(pta) pta.placeholder=pta.dataset.origPlaceholder||pta.placeholder; }
+  }
+  micRecognition=new SR();
+  micRecognition.lang="nl-NL";
+  micRecognition.continuous=true;
   /* interimResults MOET false blijven: op Android Chrome worden tussentijdse
      resultaten anders telkens als 'definitief' herhaald -> echo/dubbele woorden. */
-  brainRecognition.interimResults=false;
-  brainRecording=true;
-  brainTranscript="";
-  const ta=$("#brainQuickAdd");
+  micRecognition.interimResults=false;
+  micRecording=true;
+  micTranscript="";
+  micTargetId=taId; micBtnId=btnId;
+  const ta=$("#"+taId);
+  ta.dataset.origPlaceholder=ta.placeholder;
   ta.value=""; ta.placeholder="Aan het luisteren…";
-  const btn=$("#brainMicBtn");
-  btn.classList.add("recording"); btn.textContent="⏹️";
+  const btn=$("#"+btnId);
+  btn.dataset.idleLabel=idleLabel;
+  btn.disabled=false;
+  btn.classList.add("recording"); btn.textContent=recLabel;
+  MIC_BTN_IDS.filter(id=>id!==btnId).forEach(id=>{ const b=$("#"+id); if(b) b.disabled=true; });
 
-  brainRecognition.onresult=e=>{
+  micRecognition.onresult=e=>{
     for(let i=e.resultIndex;i<e.results.length;i++){
-      if(e.results[i].isFinal) brainTranscript+=e.results[i][0].transcript+" ";
+      if(e.results[i].isFinal) micTranscript+=e.results[i][0].transcript+" ";
     }
-    ta.value=brainTranscript.trim();
+    ta.value=micTranscript.trim();
     autoGrow(ta);
   };
-  brainRecognition.onerror=e=>{
+  micRecognition.onerror=e=>{
     if(e.error!=="aborted" && e.error!=="no-speech") toast("Fout bij spraakherkenning: "+e.error);
   };
-  brainRecognition.onend=()=>{
+  micRecognition.onend=()=>{
     /* start() faalt soms stil als de engine nog bezig is; retry tot het lukt
        zolang we nog aan het opnemen zijn (voorkomt vroegtijdig afkappen). */
-    if(brainRecording){
+    if(micRecording){
       const tryStart=()=>{
-        if(!brainRecording) return;
-        try{ brainRecognition.start(); } catch(e){ setTimeout(tryStart,150); }
+        if(!micRecording) return;
+        try{ micRecognition.start(); } catch(e){ setTimeout(tryStart,150); }
       };
       tryStart();
     }
   };
-  try{ brainRecognition.start(); } catch(e){ toast("Kan microfoon niet starten: "+e.message); }
+  try{ micRecognition.start(); } catch(e){ toast("Kan microfoon niet starten: "+e.message); }
 }
-async function stopBrainRecording(){
-  brainRecording=false;
-  if(brainRecognition){
-    brainRecognition.onend=null; brainRecognition.onerror=null;
-    try{ brainRecognition.stop(); } catch(e){}
+async function stopMicRecording(taId, btnId, idleLabel){
+  idleLabel=idleLabel||"🎙️";
+  micRecording=false;
+  if(micRecognition){
+    micRecognition.onend=null; micRecognition.onerror=null;
+    try{ micRecognition.stop(); } catch(e){}
   }
-  const btn=$("#brainMicBtn");
-  btn.classList.remove("recording"); btn.textContent="🎙️";
-  const ta=$("#brainQuickAdd");
-  ta.placeholder="Iets onthouden…";
-  const raw=(ta.value||brainTranscript).trim();
+  const btn=$("#"+btnId);
+  btn.classList.remove("recording"); btn.textContent=idleLabel;
+  MIC_BTN_IDS.filter(id=>id!==btnId).forEach(id=>{ const b=$("#"+id); if(b) b.disabled=false; });
+  const ta=$("#"+taId);
+  ta.placeholder=ta.dataset.origPlaceholder||"";
+  const raw=(ta.value||micTranscript).trim();
   if(!raw){ toast("Geen tekst herkend, probeer opnieuw"); return; }
   ta.value=raw; autoGrow(ta);
-  if(!getApiKey()){ toast("Spraak herkend — stel een AI-sleutel in (⚙️ bij Zoeken) voor automatische opmaak"); return; }
+  if(!getApiKey()){ toast("Spraak herkend — stel een AI-sleutel in (⚙️ bij Zoeken in Brein) voor automatische opmaak"); return; }
   btn.disabled=true;
-  toast("Notitie opmaken…");
+  toast("Tekst opmaken…");
   try{
     const formatted=await formatNoteAI(raw);
     /* alleen overschrijven als de gebruiker het tekstveld niet inmiddels zelf bewerkt heeft */
     if(formatted && ta.value.trim()===raw){ ta.value=formatted; autoGrow(ta); }
-  } catch(e){ toast("Kon notitie niet opmaken, ruwe tekst behouden"); }
+  } catch(e){ toast("Kon tekst niet opmaken, ruwe tekst behouden"); }
   btn.disabled=false;
 }
 async function formatNoteAI(text){
@@ -2520,7 +2544,9 @@ async function formatNoteAI(text){
   if(!d.content || !d.content[0]) throw new Error("leeg antwoord");
   return d.content[0].text.trim();
 }
-$("#brainMicBtn").addEventListener("click",()=>{ brainRecording? stopBrainRecording() : startBrainRecording(); });
+$("#brainMicBtn").addEventListener("click",()=>{ micRecording && micBtnId==="brainMicBtn"? stopMicRecording("brainQuickAdd","brainMicBtn") : startMicRecording("brainQuickAdd","brainMicBtn"); });
+$("#energyMicBtn").addEventListener("click",()=>{ micRecording && micBtnId==="energyMicBtn"? stopMicRecording("energyNote","energyMicBtn","🎙️ Spreek in") : startMicRecording("energyNote","energyMicBtn","🎙️ Spreek in","⏹️ Stop opname"); });
+$("#closeMicBtn").addEventListener("click",()=>{ micRecording && micBtnId==="closeMicBtn"? stopMicRecording("closeDayNote","closeMicBtn","🎙️ Spreek in") : startMicRecording("closeDayNote","closeMicBtn","🎙️ Spreek in","⏹️ Stop opname"); });
 
 /* =====================================================
    4. FOCUS
