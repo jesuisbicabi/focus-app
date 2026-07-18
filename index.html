@@ -700,6 +700,19 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
     <textarea class="wiz-grow" id="tasksQuickAdd" rows="1" placeholder="Nieuwe taak toevoegen…"></textarea>
     <button id="tasksQuickAddBtn" aria-label="Taak toevoegen">＋</button>
   </div>
+  <button class="btn-link" id="tasksArchive" style="align-self:center;margin-top:4px">🗂️ Gedaan-archief</button>
+</section>
+
+<!-- ========== 7 GEDAAN-ARCHIEF ========== -->
+<section class="screen" id="screen-archive">
+  <div class="screen-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+    <div><h2>🗂️ Gedaan-archief</h2><p>Alle voltooide taken terugvinden</p></div>
+    <button class="btn-link" id="archiveBack" style="flex:none">← Terug</button>
+  </div>
+  <div class="search-bar">
+    🔍<input type="text" id="archiveSearch" placeholder="Zoeken in gedane taken…">
+  </div>
+  <div id="archiveBlock"></div>
 </section>
 
 <!-- ========== 3 BREIN ========== -->
@@ -1797,6 +1810,69 @@ function removeParked(id){
   if(currentScreen==="screen-tasks") renderTasksTab();
   if(currentScreen==="screen-brain") renderBrain();
 }
+
+/* ---------- gedaan-archief: voltooide taken terugvinden, per maand + energieniveau ---------- */
+let archiveQuery="";
+function archiveGroups(){
+  const q=archiveQuery.toLowerCase().trim();
+  const done=tasks.filter(t=>t.done && (!q || t.name.toLowerCase().includes(q)));
+  const byMonth={};
+  done.forEach(t=>{
+    const key=(t.doneAt||"").slice(0,7);
+    if(!byMonth[key]) byMonth[key]={easy:[],normal:[],intense:[]};
+    (byMonth[key][t.energy]||byMonth[key].normal).push(t);
+  });
+  return Object.keys(byMonth).sort().reverse().map(key=>({key, groups:byMonth[key]}));
+}
+function archiveItemEl(t){
+  const em=ENERGY_META[t.energy]||ENERGY_META.normal;
+  const div=document.createElement("div");
+  div.className="task-item"; div.style.borderLeftColor=em.color;
+  const d=new Date(t.doneAt+"T12:00:00");
+  const datum=!isNaN(d)? d.getDate()+" "+MAANDEN[d.getMonth()] : (t.doneAt||"onbekende datum");
+  div.innerHTML='<div class="info"><div class="name">'+esc(t.name)+'</div><div class="sub">'+esc(datum)+' · '+t.minutes+' min</div></div>'
+    +'<div class="btns"><button class="icon-btn" data-a="del" title="Verwijder">🗑️</button></div>';
+  div.querySelector('[data-a="del"]').addEventListener("click",()=>{
+    if(confirm('Taak "'+t.name+'" definitief verwijderen uit het archief?')){
+      tasks=tasks.filter(x=>x.id!==t.id);
+      persistTasks();
+      renderArchive();
+      toast("Verwijderd uit archief");
+      pushTaskDelete(t.id);
+    }
+  });
+  return div;
+}
+function renderArchive(){
+  const box=$("#archiveBlock"); box.innerHTML="";
+  const groups=archiveGroups();
+  if(!groups.length){
+    box.innerHTML='<p class="empty-note">'+(archiveQuery? "Niets gevonden voor “"+esc(archiveQuery)+"”.":"Nog geen voltooide taken.")+'</p>';
+    return;
+  }
+  const ENERGY_ORDER=[["easy","🟢 MAKKELIJK"],["normal","🔵 NORMAAL"],["intense","🟣 INTENSIEF"]];
+  groups.forEach(({key,groups:g})=>{
+    const parts=key.split("-");
+    const maandNaam=MAANDEN[parseInt(parts[1],10)-1];
+    const label=maandNaam? (maandNaam.toUpperCase()+" "+parts[0]) : "ONBEKENDE DATUM";
+    box.insertAdjacentHTML("beforeend",'<div class="note-cat"><span class="label">'+esc(label)+'</span></div>');
+    ENERGY_ORDER.forEach(([ekey,elabel])=>{
+      const list=g[ekey];
+      if(!list || !list.length) return;
+      list.sort((a,b)=>a.doneAt<b.doneAt?1:-1);
+      box.insertAdjacentHTML("beforeend",'<div class="task-group-title"><span class="label">'+elabel+' ('+list.length+')</span></div>');
+      list.forEach(t=>box.appendChild(archiveItemEl(t)));
+    });
+  });
+}
+function openArchive(){
+  archiveQuery=""; $("#archiveSearch").value="";
+  renderArchive();
+  showScreen("screen-archive");
+}
+$("#tasksArchive").addEventListener("click", openArchive);
+$("#archiveBack").addEventListener("click",()=>{ setTab("tasks"); renderTasksTab(); showScreen("screen-tasks"); });
+$("#archiveSearch").addEventListener("input",()=>{ archiveQuery=$("#archiveSearch").value; renderArchive(); });
 
 /* ---------- taak voltooien + herhaling ---------- */
 function nextOccurrence(t){
