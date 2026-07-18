@@ -207,6 +207,9 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
   flex:none;width:48px;height:48px;border-radius:var(--radius-btn);
   background:var(--accent-blue);color:#fff;font-size:1.3rem;font-weight:700;
 }
+#brainMicBtn{background:var(--bg-card);color:var(--text-primary);border:1.5px solid #E4E8F0;font-size:1.15rem}
+#brainMicBtn.recording{background:#FDEAEA;border-color:#E24B4A;animation:micPulse 1s infinite}
+@keyframes micPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .alldone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 0}
 .alldone .big-check{
   width:96px;height:96px;border-radius:50%;background:var(--accent-green);color:#fff;
@@ -873,6 +876,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 <div class="brain-add" id="brainAddBar">
   <div class="add-inline">
     <textarea class="wiz-grow" id="brainQuickAdd" rows="1" placeholder="Iets onthouden…"></textarea>
+    <button id="brainMicBtn" aria-label="Spreek in" title="Spreek in">🎙️</button>
     <button id="brainQuickAddBtn" aria-label="Notitie toevoegen">＋</button>
   </div>
 </div>
@@ -2396,6 +2400,93 @@ function brainAdd(){
 $("#brainQuickAdd").addEventListener("input",()=>autoGrow($("#brainQuickAdd")));
 $("#brainQuickAddBtn").addEventListener("click",brainAdd);
 $("#brainQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); brainAdd(); } });
+
+/* ---------- inspreken (Brein): spraak-naar-tekst + AI-opmaak, zelfde sleutel als "Vraag AI" ---------- */
+let brainRecognition=null, brainRecording=false, brainTranscript="";
+function startBrainRecording(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ toast("Spraakherkenning niet beschikbaar in deze browser"); return; }
+  brainRecognition=new SR();
+  brainRecognition.lang="nl-NL";
+  brainRecognition.continuous=true;
+  /* interimResults MOET false blijven: op Android Chrome worden tussentijdse
+     resultaten anders telkens als 'definitief' herhaald -> echo/dubbele woorden. */
+  brainRecognition.interimResults=false;
+  brainRecording=true;
+  brainTranscript="";
+  const ta=$("#brainQuickAdd");
+  ta.value=""; ta.placeholder="Aan het luisteren…";
+  const btn=$("#brainMicBtn");
+  btn.classList.add("recording"); btn.textContent="⏹️";
+
+  brainRecognition.onresult=e=>{
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) brainTranscript+=e.results[i][0].transcript+" ";
+    }
+    ta.value=brainTranscript.trim();
+    autoGrow(ta);
+  };
+  brainRecognition.onerror=e=>{
+    if(e.error!=="aborted" && e.error!=="no-speech") toast("Fout bij spraakherkenning: "+e.error);
+  };
+  brainRecognition.onend=()=>{
+    /* start() faalt soms stil als de engine nog bezig is; retry tot het lukt
+       zolang we nog aan het opnemen zijn (voorkomt vroegtijdig afkappen). */
+    if(brainRecording){
+      const tryStart=()=>{
+        if(!brainRecording) return;
+        try{ brainRecognition.start(); } catch(e){ setTimeout(tryStart,150); }
+      };
+      tryStart();
+    }
+  };
+  try{ brainRecognition.start(); } catch(e){ toast("Kan microfoon niet starten: "+e.message); }
+}
+async function stopBrainRecording(){
+  brainRecording=false;
+  if(brainRecognition){
+    brainRecognition.onend=null; brainRecognition.onerror=null;
+    try{ brainRecognition.stop(); } catch(e){}
+  }
+  const btn=$("#brainMicBtn");
+  btn.classList.remove("recording"); btn.textContent="🎙️";
+  const ta=$("#brainQuickAdd");
+  ta.placeholder="Iets onthouden…";
+  const raw=(ta.value||brainTranscript).trim();
+  if(!raw){ toast("Geen tekst herkend, probeer opnieuw"); return; }
+  ta.value=raw; autoGrow(ta);
+  if(!getApiKey()){ toast("Spraak herkend — stel een AI-sleutel in (⚙️ bij Zoeken) voor automatische opmaak"); return; }
+  btn.disabled=true;
+  toast("Notitie opmaken…");
+  try{
+    const formatted=await formatNoteAI(raw);
+    /* alleen overschrijven als de gebruiker het tekstveld niet inmiddels zelf bewerkt heeft */
+    if(formatted && ta.value.trim()===raw){ ta.value=formatted; autoGrow(ta); }
+  } catch(e){ toast("Kon notitie niet opmaken, ruwe tekst behouden"); }
+  btn.disabled=false;
+}
+async function formatNoteAI(text){
+  const r=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "x-api-key":getApiKey(),
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    },
+    body:JSON.stringify({model:"claude-haiku-4-5-20251001", max_tokens:1000, messages:[{role:"user",content:
+      "Zet deze gesproken, rommelige tekst om in een nette, beknopte notitie in het Nederlands. "
+      +"Corrigeer stopwoorden, herhalingen en spreektaal-onhandigheden, maar verzin niets bij en laat geen inhoud weg. "
+      +"Gewone platte tekst, geen markdown-opmaak (geen #, geen **); gebruik \"- \" voor losse punten als er duidelijk meerdere aparte punten zijn, anders gewoon lopende tekst. "
+      +"Geef ALLEEN de notitietekst terug, geen aanhef, geen uitleg.\n\nGesproken tekst: \""+text+"\""
+    }]})
+  });
+  if(!r.ok) throw new Error(String(r.status));
+  const d=await r.json();
+  if(!d.content || !d.content[0]) throw new Error("leeg antwoord");
+  return d.content[0].text.trim();
+}
+$("#brainMicBtn").addEventListener("click",()=>{ brainRecording? stopBrainRecording() : startBrainRecording(); });
 
 /* =====================================================
    4. FOCUS
