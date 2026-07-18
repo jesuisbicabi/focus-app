@@ -884,7 +884,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
 <!-- ========== BOTTOM NAV ========== -->
 <nav class="bottomnav">
   <button class="tab active" data-tab="start"><span class="ico">☀️</span><span class="tab-label">Start</span></button>
-  <button class="tab" data-tab="tasks"><span class="ico">☑️</span><span class="tab-label">Taken</span></button>
+  <button class="tab" data-tab="tasks"><span class="ico"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="5" fill="#34C759"/><path d="M7 12.5l3.2 3.2L17 8.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tab-label">Taken</span></button>
   <button class="tab" data-tab="brain"><span class="ico">💭</span><span class="tab-label">Brein</span></button>
   <button class="tab" data-tab="close"><span class="ico">🌙</span><span class="tab-label">Dagafsluiting</span></button>
 </nav>
@@ -1737,6 +1737,7 @@ function taskItemEl(t,isToday){
     +'<div class="btns">'
     +'<button class="icon-btn" data-a="start" title="Start focus">▶️</button>'
     +'<button class="icon-btn" data-a="edit" title="Bewerk">✏️</button>'
+    +'<button class="icon-btn" data-a="note" title="Maak notitie">📝</button>'
     +'<button class="icon-btn" data-a="del" title="Verwijder">🗑️</button>'
     +'<button class="icon-btn" data-a="done" title="Voltooien">✅</button></div>';
   div.querySelector('[data-a="start"]').addEventListener("click",()=>{
@@ -1744,6 +1745,7 @@ function taskItemEl(t,isToday){
     openFocusIntro(t.id);
   });
   div.querySelector('[data-a="edit"]').addEventListener("click",()=>openWizard({edit:t}));
+  div.querySelector('[data-a="note"]').addEventListener("click",()=>openCatSheet(t.name, t.id));
   div.querySelector('[data-a="del"]').addEventListener("click",()=>{
     if(confirm('Taak "'+t.name+'" verwijderen?')){
       tasks=tasks.filter(x=>x.id!==t.id);
@@ -2356,8 +2358,10 @@ $("#brainAskBtn").addEventListener("click",runBrainAiSearch);
 $("#brainSearch").addEventListener("keydown",e=>{ if(e.key==="Enter") runBrainAiSearch(); });
 /* ---- toevoegen: eerst tekst, dan categorie kiezen ---- */
 let pendingNoteText=null;
-function openCatSheet(text){
+let pendingNoteFromTaskId=null;
+function openCatSheet(text, fromTaskId){
   pendingNoteText=text;
+  pendingNoteFromTaskId=fromTaskId||null;
   $("#catPreview").textContent=text;
   $("#catCustom").value="";
   const grid=$("#catGrid"); grid.innerHTML="";
@@ -2369,16 +2373,24 @@ function openCatSheet(text){
   });
   $("#catBackdrop").classList.add("open");
 }
-function closeCatSheet(){ $("#catBackdrop").classList.remove("open"); pendingNoteText=null; }
+function closeCatSheet(){ $("#catBackdrop").classList.remove("open"); pendingNoteText=null; pendingNoteFromTaskId=null; }
 function saveNoteWithCat(cat){
   if(!pendingNoteText) return;
   const n={id:uid(), text:pendingNoteText, cat, created:todayStr()};
   notes.unshift(n);
   persistNotes();
+  const fromTaskId=pendingNoteFromTaskId;
   closeCatSheet();
   brainQuery=""; $("#brainSearch").value="";
   brainOpenCats.add(cat);
-  renderBrain(); toast("Onthouden ✓ · "+cat);
+  if(fromTaskId){
+    tasks=tasks.filter(x=>x.id!==fromTaskId);
+    day.todayTasks=day.todayTasks.filter(id=>id!==fromTaskId);
+    persistTasks(); persistDay();
+    renderTasksTab();
+    pushTaskDelete(fromTaskId);
+  }
+  renderBrain(); toast(fromTaskId? "Notitie aangemaakt · taak opgeruimd ✓ · "+cat : "Onthouden ✓ · "+cat);
   pushNoteAdd(n);
 }
 function catCustomSave(){
