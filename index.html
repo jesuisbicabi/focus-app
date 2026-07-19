@@ -751,7 +751,6 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
     <select id="filterDuur">
       <option value="">Duur: alles</option>
       <option value="5">5 min</option>
-      <option value="7.5">7,5 min</option>
       <option value="15">15 min</option>
       <option value="30">30 min</option>
       <option value="60">1 uur</option>
@@ -1343,12 +1342,19 @@ async function syncFromSheet(){
       if(row.Type==="taak"){
         const incoming=sheetItemToTask(row);
         const local=tasks.find(x=>x.id===incoming.id);
-        if(local) Object.assign(local, incoming);
+        if(local){
+          // energy/minutes NIET overnemen bij een bestaande lokale taak: Tijdsduur→energie
+          // is een lossy vertaling (zie minutesToEnergy), en de lokale keuze bij aanmaak
+          // (wiz.energy/wiz.minutes) staat los van elkaar — anders overschrijft de eigen
+          // sheet-echo bv. "intensief, 15 min" met "makkelijk" bij elke sync.
+          const {energy, minutes, ...rest} = incoming;
+          Object.assign(local, rest);
+        }
         else { tasks.push(incoming); changed=true; }
       } else if(row.Type==="notitie"){
         const incoming=sheetItemToNote(row);
         const local=notes.find(x=>x.id===incoming.id);
-        if(local) Object.assign(local, incoming);
+        if(local) Object.assign(local, {...incoming, cat: row.Categorie || local.cat});
         else { notes.unshift(incoming); changed=true; }
       }
     });
@@ -1549,16 +1555,23 @@ function scoreTask(task, level){
   else if((wens==="normal") || (task.energy==="normal")) s+=10;
   return s;
 }
-function autoPick(level){
+function autoPick(level, limit){
+  if(limit==null) limit=3;
   return openTasks()
     .map(t=>({t, s:scoreTask(t,level)}))
     .sort((a,b)=>b.s-a.s)
-    .slice(0,3).map(x=>x.t.id);
+    .slice(0,limit).map(x=>x.t.id);
+}
+/* ids van vandaag al voltooide taken — moeten blijven staan bij "kies opnieuw" */
+function alreadyDoneToday(){
+  const doneIds=new Set(day.completed.map(c=>c.id));
+  return day.todayTasks.filter(id=>doneIds.has(id));
 }
 
 $("#chooseApp").addEventListener("click",()=>{
   $("#chooseApp").classList.add("selected");
-  day.todayTasks=autoPick(lastEnergy());
+  const keep=alreadyDoneToday();
+  day.todayTasks=keep.concat(autoPick(lastEnergy(), Math.max(0,3-keep.length)));
   day.dagstartDone=true; persistDay();
   setTimeout(()=>{ renderHome(); showScreen("screen-home"); },180);
 });
@@ -1568,18 +1581,20 @@ $("#chooseSelf").addEventListener("click",()=>{
 });
 
 /* ---------- swipe-kiezer ---------- */
-let swipeQueue=[], swipeChosen=[];
+let swipeQueue=[], swipeChosen=[], swipeKeep=[];
 function startSwipe(){
   const level=lastEnergy();
+  swipeKeep=alreadyDoneToday();
   swipeQueue=openTasks().map(t=>({t,s:scoreTask(t,level)})).sort((a,b)=>b.s-a.s).map(x=>x.t);
   swipeChosen=[];
   renderSwipeCard();
   showScreen("screen-swipe");
 }
 function renderSwipeCard(){
-  $("#swipeCount").textContent=swipeChosen.length+" VAN 3 GEKOZEN";
+  const target=Math.max(0,3-swipeKeep.length);
+  $("#swipeCount").textContent=swipeChosen.length+" VAN "+target+" GEKOZEN";
   const stage=$("#swipeStage"); stage.innerHTML="";
-  if(swipeChosen.length>=3 || swipeQueue.length===0){ finishSwipe(); return; }
+  if(swipeChosen.length>=target || swipeQueue.length===0){ finishSwipe(); return; }
   const t=swipeQueue[0]; const em=ENERGY_META[t.energy];
   const card=document.createElement("div");
   card.className="swipe-card"; card.id="activeSwipeCard";
@@ -1622,7 +1637,7 @@ $("#swipeRight").addEventListener("click",()=>swipeDecide(true));
 $("#swipeLeft").addEventListener("click",()=>swipeDecide(false));
 $("#swipeDone").addEventListener("click",finishSwipe);
 function finishSwipe(){
-  day.todayTasks=swipeChosen.slice();
+  day.todayTasks=swipeKeep.concat(swipeChosen);
   day.dagstartDone=true; persistDay();
   renderHome(); showScreen("screen-home");
 }
@@ -2306,10 +2321,23 @@ $("#filterType").addEventListener("change",e=>{ brainFilterType=e.target.value; 
 $("#filterCat").addEventListener("change",e=>{ brainFilterCat=e.target.value; renderBrain(); });
 $("#filterPrio").addEventListener("change",e=>{ brainFilterPrio=e.target.value; renderBrain(); });
 $("#filterDuur").addEventListener("change",e=>{ brainFilterDuur=e.target.value; renderBrain(); });
+/* zelfde grenzen als TIJDSDUUR_STEPS, zodat custom duren (bv. 20 of 45 min) in de
+   dichtstbijzijnde bucket vallen i.p.v. nooit te matchen op een exacte waarde */
+function minutesInDuurBucket(minutes, bucketValue){
+  if(minutes==null) return false;
+  switch(bucketValue){
+    case "5": return minutes<=7.5;
+    case "15": return minutes>7.5 && minutes<=15;
+    case "30": return minutes>15 && minutes<=30;
+    case "60": return minutes>30 && minutes<=60;
+    case "999": return minutes>60;
+    default: return false;
+  }
+}
 function itemMatchesFilters(kind, item){
   if(brainFilterType && brainFilterType!==kind) return false;
   if(brainFilterCat){
-    const cat = kind==="taak" ? (item.category||"") : (item.cat||"");
+    const cat = (kind==="taak" ? (item.category||"") : (item.cat||"")).trim();
     if(cat!==brainFilterCat) return false;
   }
   if(brainFilterPrio){
@@ -2318,9 +2346,7 @@ function itemMatchesFilters(kind, item){
   }
   if(brainFilterDuur){
     if(kind==="notitie") return false;   /* notities hebben geen duur */
-    const d=Number(brainFilterDuur);
-    if(d===999){ if(!(item.minutes>60)) return false; }
-    else if(item.minutes!==d) return false;
+    if(!minutesInDuurBucket(item.minutes, brainFilterDuur)) return false;
   }
   return true;
 }

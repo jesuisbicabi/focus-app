@@ -105,10 +105,21 @@ function getAllItems() {
 }
 
 // ── addItem ─────────────────────────────────────────────────
+// Idempotent op ID: als een retry (na een verbroken verbinding) dezelfde
+// add opnieuw verstuurt, overschrijft dit de bestaande rij i.p.v. een
+// dubbele rij toe te voegen.
 function addItem(item) {
   const sheet = getSheet();
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   const row = headers.map(h => (item[h] !== undefined ? item[h] : ''));
+  const idCol = headers.indexOf('ID');
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][idCol]) === String(item.ID)) {
+      sheet.getRange(i + 1, 1, 1, row.length).setValues([row]);
+      return item;
+    }
+  }
   sheet.appendRow(row);
   return item;
 }
