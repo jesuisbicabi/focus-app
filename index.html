@@ -1276,7 +1276,7 @@ function taskToSheetItemFull(t){
     ID:t.id, Datum:(t.created||todayStr())+"T12:00:00",
     Type:"taak", Inhoud:t.name, Categorie:t.category||"",
     Tijdsduur:minutesToTijdsduur(t.minutes), Prioriteit:t.priority||"gemiddeld",
-    Status:t.done?"gedaan":"open", Goedgekeurd:"false",
+    Status:t.done?"gedaan":"open", Goedgekeurd:"true",
     Dag:t.day||"", Deadline:t.deadline||"",
     Herhaling: JSON.stringify(t.repeat||{type:"once"}),
     Microstappen: JSON.stringify(t.steps||[])
@@ -1306,7 +1306,7 @@ function noteToSheetItemFull(n){
   return {
     ID:n.id, Datum:(n.created||todayStr())+"T12:00:00", Type:"notitie",
     Inhoud:n.text, Categorie:n.cat||"", Tijdsduur:"", Prioriteit:"gemiddeld",
-    Status:"open", Goedgekeurd:"false", Dag:"", Deadline:"", Herhaling:"", Microstappen:""
+    Status:"open", Goedgekeurd:"true", Dag:"", Deadline:"", Herhaling:"", Microstappen:""
   };
 }
 function noteToSheetUpdates(n){ return { Inhoud:n.text, Categorie:n.cat||"" }; }
@@ -1323,9 +1323,12 @@ function pushNoteUpdate(n){ queueOrSend({action:"update", id:n.id, updates:noteT
 function pushNoteDelete(id){ queueOrSend({action:"delete", id}); }
 
 /* ---- ophalen + samenvoegen ----
-   Alleen Goedgekeurd:"true" items worden overgenomen — niet-goedgekeurde
-   concepten blijven in de Extern Brein Inbox staan totdat jij ze daar
-   goedkeurt (meteen_goedkeuren staat vanuit de focus-app altijd op false). */
+   Alleen Goedgekeurd:"true" items worden overgenomen. Items die vanuit de
+   focus-app zelf worden aangemaakt/gewijzigd krijgen sinds 2026-07-19 meteen
+   Goedgekeurd:"true" mee (geen inbox-review meer nodig) — Extern Brein wordt
+   uitgefaseerd, dus de losse goedkeurstap in de Sheet heeft geen functie meer
+   voor items die al via focus-app zelf gaan. Items die apart/handmatig in de
+   Sheet worden gezet blijven wel gefilterd totdat Goedgekeurd op true staat. */
 async function syncFromSheet(){
   if(!sheetsReady()) return;
   setSyncState("syncing");

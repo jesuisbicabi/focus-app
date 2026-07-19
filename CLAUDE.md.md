@@ -35,7 +35,7 @@ Een mobile-first PWA voor Bica: een alleenstaande moeder met ADD die structuur n
 
 ### Belangrijk:
 
-* `meteen\\\_goedkeuren` moet altijd op `False` staan (Bica reviewt eerst)
+* ~~`meteen\\\_goedkeuren` moet altijd op `False` staan (Bica reviewt eerst)~~ — **gewijzigd 2026-07-19**: taken/notities die vanuit focus-app zelf worden aangemaakt/gewijzigd krijgen nu direct `Goedgekeurd:"true"` mee, zonder inbox-review-stap. Reden: Extern Brein wordt op termijn uitgefaseerd (zie samenvoegplan fase 4), dus de losse goedkeuring had alleen zin zolang Extern Brein de bron van waarheid was. De review-stap gold sowieso alleen als blokkade voor het terugsynchroniseren naar andere toestellen (zie fase 3) — dat is nu opgelost.
 * Categorie exact overnemen van bestaande categorieën (check eerst!)
 * De app is een FRONTEND die de connector aanroept — de connector is de bron van waarheid
 
