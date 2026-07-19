@@ -22,9 +22,9 @@ Een mobile-first PWA voor Bica: een alleenstaande moeder met ADD die structuur n
 
 ### Bestaande tools (via MCP connector "my connector"):
 
-* `exterbrain\_opvragen` — Taken/notities ophalen uit het tweede brein
-* `exterbrain\_toevoegen` — Taak/notitie toevoegen
-* `exterbrain\_bijwerken` — Item markeren als afgerond, heropenen, etc.
+* `exterbrain\\\_opvragen` — Taken/notities ophalen uit het tweede brein
+* `exterbrain\\\_toevoegen` — Taak/notitie toevoegen
+* `exterbrain\\\_bijwerken` — Item markeren als afgerond, heropenen, etc.
 
 ### Hoe de app ze gebruikt:
 
@@ -35,7 +35,7 @@ Een mobile-first PWA voor Bica: een alleenstaande moeder met ADD die structuur n
 
 ### Belangrijk:
 
-* `meteen\_goedkeuren` moet altijd op `False` staan (Bica reviewt eerst)
+* `meteen\\\_goedkeuren` moet altijd op `False` staan (Bica reviewt eerst)
 * Categorie exact overnemen van bestaande categorieën (check eerst!)
 * De app is een FRONTEND die de connector aanroept — de connector is de bron van waarheid
 
@@ -350,31 +350,31 @@ Bij pauze: "GEPAUZEERD" label rechtsboven, Pauze-knop wordt "Hervat"
 
 ```css
 :root {
-  /\* Achtergronden \*/
-  --bg-main: #F0F2F7;           /\* Lichtgrijs-blauw, Structuro-achtig \*/
-  --bg-card: #FFFFFF;            /\* Witte kaarten \*/
-  --bg-card-accent: #F7F9FC;    /\* Licht accent voor taakkaart/focus (zachtblauw-wit) \*/
+  /\\\* Achtergronden \\\*/
+  --bg-main: #F0F2F7;           /\\\* Lichtgrijs-blauw, Structuro-achtig \\\*/
+  --bg-card: #FFFFFF;            /\\\* Witte kaarten \\\*/
+  --bg-card-accent: #F7F9FC;    /\\\* Licht accent voor taakkaart/focus (zachtblauw-wit) \\\*/
   
-  /\* Energie-kleuren \*/
-  --energy-easy: #34C759;        /\* Groen - Makkelijk \*/
-  --energy-normal: #3478F6;      /\* Blauw - Normaal \*/
-  --energy-intense: #8B5CF6;     /\* Paars - Intensief \*/
+  /\\\* Energie-kleuren \\\*/
+  --energy-easy: #34C759;        /\\\* Groen - Makkelijk \\\*/
+  --energy-normal: #3478F6;      /\\\* Blauw - Normaal \\\*/
+  --energy-intense: #8B5CF6;     /\\\* Paars - Intensief \\\*/
   
-  /\* Accentkleuren \*/
-  --accent-green: #34C759;       /\* Voltooien, bevestigingen \*/
-  --accent-blue: #3478F6;        /\* Links, actieve selectie \*/
-  --accent-focus-green: #30D158; /\* Timer-cirkel \*/
+  /\\\* Accentkleuren \\\*/
+  --accent-green: #34C759;       /\\\* Voltooien, bevestigingen \\\*/
+  --accent-blue: #3478F6;        /\\\* Links, actieve selectie \\\*/
+  --accent-focus-green: #30D158; /\\\* Timer-cirkel \\\*/
   
-  /\* Tekst \*/
-  --text-primary: #1A2332;       /\* Hoofdtekst \*/
-  --text-secondary: #8E8E93;     /\* Subtekst, labels \*/
-  --text-on-dark: #FFFFFF;       /\* Tekst op donkere achtergrond \*/
-  --text-label: #6B7280;         /\* VANDAAG, ENERGIE etc labels \*/
+  /\\\* Tekst \\\*/
+  --text-primary: #1A2332;       /\\\* Hoofdtekst \\\*/
+  --text-secondary: #8E8E93;     /\\\* Subtekst, labels \\\*/
+  --text-on-dark: #FFFFFF;       /\\\* Tekst op donkere achtergrond \\\*/
+  --text-label: #6B7280;         /\\\* VANDAAG, ENERGIE etc labels \\\*/
   
-  /\* Gevoel-kleuren (dagafsluiting) \*/
-  --feel-heavy: #FF6B9D;         /\* Zwaar - roze \*/
-  --feel-ok: #9CA3AF;            /\* Oké - grijs \*/
-  --feel-proud: #60A5FA;         /\* Trots - blauw \*/
+  /\\\* Gevoel-kleuren (dagafsluiting) \\\*/
+  --feel-heavy: #FF6B9D;         /\\\* Zwaar - roze \\\*/
+  --feel-ok: #9CA3AF;            /\\\* Oké - grijs \\\*/
+  --feel-proud: #60A5FA;         /\\\* Trots - blauw \\\*/
 }
 ```
 
@@ -418,14 +418,14 @@ Alles in één bestand (zoals de projectbeheer-app):
 
 localStorage voor:
 
-* `focusapp\_energy` — gekozen energieniveau vandaag
-* `focusapp\_today\_tasks` — geselecteerde taken voor vandaag (IDs)
-* `focusapp\_completed` — voltooide taken vandaag (met tijdstip)
-* `focusapp\_parked` — geparkeerde gedachten (array, max 10)
-* `focusapp\_settings` — naam, voorkeuren
-* `focusapp\_timer` — timer state (running/paused/stopped, remaining seconds)
-* `focusapp\_feeling` — dagafsluiting gevoel
-* `focusapp\_date` — datum van huidige sessie (reset bij nieuwe dag)
+* `focusapp\\\_energy` — gekozen energieniveau vandaag
+* `focusapp\\\_today\\\_tasks` — geselecteerde taken voor vandaag (IDs)
+* `focusapp\\\_completed` — voltooide taken vandaag (met tijdstip)
+* `focusapp\\\_parked` — geparkeerde gedachten (array, max 10)
+* `focusapp\\\_settings` — naam, voorkeuren
+* `focusapp\\\_timer` — timer state (running/paused/stopped, remaining seconds)
+* `focusapp\\\_feeling` — dagafsluiting gevoel
+* `focusapp\\\_date` — datum van huidige sessie (reset bij nieuwe dag)
 
 ### Connector-aanroepen
 
@@ -510,10 +510,10 @@ De app draait als standalone HTML. Connector-aanroepen worden gedaan wanneer:
 ## Bestandslocatie
 
 * Repository: `jesuisbicabi/focus-app`
-* NAS project: `\\\\serverDS216\\Back-Up\\projecten\\focus-app\\`
+* NAS project: `\\\\\\\\serverDS216\\\\Back-Up\\\\projecten\\\\focus-app\\\\`
 * Live URL: `https://jesuisbicabi.github.io/focus-app/`
 
----
+\---
 
 ## Voortgang — samenvoegplan (bijgewerkt door Claude Code, 19 juli 2026)
 
@@ -523,7 +523,7 @@ Los van bovenstaande oorspronkelijke fasering loopt er een apart plan om focus-a
 
 * **Fase 1 — notitie → taak**: ☑️ bij een notitie in de Brein-tab opent de taak-wizard vooringevuld; bij opslaan verdwijnt de notitie en wordt de categorie overgenomen als taak-categorie.
 * **Taak → notitie (omgekeerd)**: nieuwe 📝-knop bij taken doet het spiegelbeeld — opent het categoriekeuzescherm met de taaknaam vooringevuld, taak wordt bij opslaan verwijderd en verschijnt als notitie.
-* **Fase 2 — inspreken**: microfoonknop (🎙️) met spraak-naar-tekst + Claude-opmaak (verwijdert "eh"'s, haperingen, dubbele woorden), nu aanwezig in drie velden: "Iets onthouden" (Brein), de toelichting bij een energiemeting, en de dagnotitie bij Dagafsluiting. Gebruikt dezelfde Anthropic-sleutel als de bestaande AI-zoekfunctie (`eb_api_key`, in te stellen via ⚙️ bij Zoeken in Brein). **Werkt alleen in Chrome, niet in Firefox** (Web Speech API-beperking) — bevestigd werkend door de user zelf op haar telefoon.
+* **Fase 2 — inspreken**: microfoonknop (🎙️) met spraak-naar-tekst + Claude-opmaak (verwijdert "eh"'s, haperingen, dubbele woorden), nu aanwezig in drie velden: "Iets onthouden" (Brein), de toelichting bij een energiemeting, en de dagnotitie bij Dagafsluiting. Gebruikt dezelfde Anthropic-sleutel als de bestaande AI-zoekfunctie (`eb\_api\_key`, in te stellen via ⚙️ bij Zoeken in Brein). **Werkt alleen in Chrome, niet in Firefox** (Web Speech API-beperking) — bevestigd werkend door de user zelf op haar telefoon.
 * **Inklapbare energie-groepen in Taken-tab**: chevron bij elke groep-header, klapt in/uit, persistent in localStorage; taken binnen een groep nieuwste-eerst gesorteerd.
 * **Groen icoon voor de Taken-tab** in de onderste navigatiebalk (eigen SVG i.p.v. de ☑️-emoji, die op de meeste toestellen grijs/wit rendert). Het ☑️-vinkje bij notities in Brein is bewust grijs gelaten — dat is het "nog geen taak"-signaal.
 * **"Alles openen"/"Alles sluiten"** voor de categorieën in de Brein-tab, naast het bestaande per-categorie klikgedrag (dat blijft ongewijzigd).
@@ -534,8 +534,10 @@ Los van bovenstaande oorspronkelijke fasering loopt er een apart plan om focus-a
 * **Fase 2b** (gedaan-archief: zoeken + per categorie), **fase 3** (inbox-stap eruit) en **fase 4** (Extern Brein uitfaseren) zijn nog niet gestart.
 * **Inspreken via het Samsung Galaxy Watch (Wear OS)** — bewust geparkeerd op verzoek van de user. Wear OS heeft geen volwaardige browser, dus de huidige mic-knop werkt daar niet. Drie richtingen besproken (workaround via bestaande Wear OS-notitie-app / voice-routine naar de bestaande "connector"-Cloudflare-Worker / eigen native Wear OS-app), nog geen keuze gemaakt.
 * De drie microfoonvelden zijn met een neptranscript en gemockte AI-respons getest (logica klopt, inclusief twee kleine bugs die zijn gefixt: blijven hangen van een knop bij wisselen tussen microfoons, en een placeholder die op "Aan het luisteren…" bleef staan). **Echte spraakherkenning is niet automatisch te testen** — dat heeft de user zelf gedaan voor de Brein-mic (werkt), de twee nieuwe velden (energie-toelichting, dagnotitie) zijn nog niet apart door haar bevestigd.
-* ~~`github_pat_11B5U37AY0EzxGZ6jg50C1_s.txt`~~ — opgelost 19 juli: token gerevoked door de user, bestand verwijderd, `.gitignore`-regel toegevoegd (`0feabe4`). Twee gespreklogs (`10-07-26 Code gesprek.txt`, `10-07-26 Fable gesprek.txt`) staan nog wel untracked in de werkmap, horen niet in git.
+* ~~`github\_pat\_11B5U37AY0EzxGZ6jg50C1\_s.txt`~~ — opgelost 19 juli: token gerevoked door de user, bestand verwijderd, `.gitignore`-regel toegevoegd (`0feabe4`). Twee gespreklogs (`10-07-26 Code gesprek.txt`, `10-07-26 Fable gesprek.txt`) staan nog wel untracked in de werkmap, horen niet in git.
 * **GitHub-token instellen voor de Obsidian-koppeling + eerste dagwissel controleren.** Nog niet gedaan. Twee stappen, allebei door de user zelf uit te voeren (geen actie voor Claude Code):
+
   1. In het dagboek-scherm (Dagafsluiting → dagboek/geschiedenis) op **"🔗 Obsidian-koppeling"** klikken en daar een fine-grained GitHub-token invullen dat gescopet is op de `obsidian-vault`-repo met **Contents: Read and write** (zelfde soort token als het inmiddels gerevokete Focus-App-token, maar dan voor deze andere repo — token zelf moet de user aanmaken en invoeren, dat doet Claude Code nooit).
   2. Na het instellen: bij de eerstvolgende dagwissel (na een dag met minstens wat energie/taken/dagnotitie) schrijft de app automatisch een sectie naar het vitality-monitor-maandbestand in de vault. De user moet zelf in Obsidian of op GitHub controleren of die sectie er correct in staat — Claude Code heeft geen directe leestoegang tot de vault-repo om dit te verifiëren.
 * Oudere openstaande punten uit `EERST-LEZEN-focus-app.md` (bv. de sync-bug rond het schrijven naar de Google Sheet) zijn in deze sessie niet opnieuw gecontroleerd — status daarvan is dus onbekend, niet per ongeluk als "opgelost" lezen.
+
