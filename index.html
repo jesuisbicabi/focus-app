@@ -1114,7 +1114,7 @@ input:focus,textarea:focus{outline:2px solid var(--accent-blue);outline-offset:1
     <div class="catsheet-preview" id="catPreview"></div>
     <div class="catsheet-grid" id="catGrid"></div>
     <div class="add-inline" style="margin-top:12px">
-      <input type="text" id="catCustomEmoji" maxlength="4" placeholder="🎨" style="flex:none;width:52px;text-align:center">
+      <input type="text" id="catCustomEmoji" maxlength="16" placeholder="🎨" style="flex:none;width:52px;text-align:center">
       <input type="text" id="catCustom" placeholder="Of typ een nieuwe categorie…">
       <button id="catCustomBtn" aria-label="Nieuwe categorie gebruiken">＋</button>
     </div>
@@ -1702,6 +1702,7 @@ function renderHome(){
     return;
   }
   const em=ENERGY_META[cur.energy];
+  const remaining=day.todayTasks.filter(id=>!doneIds.has(id)).length;
   const card=document.createElement("div");
   card.className="task-card"; card.style.borderLeftColor=(cur.repeat&&cur.repeat.type!=="once")?REPEAT_COLOR:em.color;
   card.innerHTML='<div class="now-row"><span class="now"><span class="dot"></span>NU AAN ZET</span>'
@@ -1710,9 +1711,9 @@ function renderHome(){
     +'<div class="tmeta">'+em.emoji+' '+em.naam+(cur.deadline?' · deadline '+cur.deadline:'')+'</div>'
     +(cur.steps&&cur.steps.length? '<button class="steps-toggle" id="homeStepsToggle"><span class="chev">▸</span> Microstappen ('+cur.steps.length+')</button><div class="steps-list" id="homeStepsList"></div>':'')
     +'<button class="btn btn-green" style="margin-top:16px" id="homeStartFocus">Start focus</button>'
-    +(day.todayTasks.length>1? '<button class="btn-link" style="align-self:center;margin-top:8px" id="homeSkipTask">⏭️ Overslaan</button>':'');
+    +(remaining>1? '<button class="btn-link" style="align-self:center;margin-top:8px" id="homeSkipTask">⏭️ Overslaan</button>':'');
   area.appendChild(card);
-  if(day.todayTasks.length>1){
+  if(remaining>1){
     $("#homeSkipTask").addEventListener("click",()=>{
       day.todayTasks=day.todayTasks.filter(id=>id!==cur.id).concat([cur.id]);
       persistDay(); renderHome();
@@ -1928,6 +1929,7 @@ function archiveItemEl(t){
 }
 let archiveCollapsed=load("focusapp_archive_collapsed", {});
 function toggleArchiveGroup(key){
+  if(archiveQuery.trim()) return;  // tijdens zoeken staat de groep toch al geforceerd open; niet de opgeslagen inklapstatus wijzigen
   archiveCollapsed[key]=!archiveCollapsed[key];
   save("focusapp_archive_collapsed", archiveCollapsed);
   renderArchive();
@@ -2299,8 +2301,9 @@ $("#tasksQuickAdd").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preve
 const BRAIN_CATS=["Werk","Computer & tech","Financiën","Fotografie","Joa","Huishouden","Persoonlijk","verzekering","films & series"];
 /* dynamisch: basislijst + alle categorieën die in de Sheet of lokale notities voorkomen */
 function catSortKey(c){
-  /* negeert een eventueel emoji-icoon vóór de naam, zodat categorieën alfabetisch op hun naam sorteren i.p.v. op het icoon */
-  return String(c).replace(/^\p{Extended_Pictographic}️?\s*/u,"");
+  /* negeert een eventueel emoji-icoon vóór de naam, zodat categorieën alfabetisch op hun naam sorteren i.p.v. op het icoon.
+     Dekt ook vlaggen (twee regional indicators) en ZWJ-reeksen (bv. 👨‍💻, 👨‍👩‍👧‍👦), niet alleen losse emoji. */
+  return String(c).replace(/^(?:\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(?:️|[\u{1F3FB}-\u{1F3FF}])?(?:‍\p{Extended_Pictographic}(?:️)?)*)\s*/u,"");
 }
 function brainCats(){
   const set=new Set(BRAIN_CATS);
@@ -2313,14 +2316,17 @@ let brainOpenCats=new Set();   // welke categorieën open staan (standaard: alle
 let brainFilterType="", brainFilterCat="", brainFilterPrio="", brainFilterDuur="";
 function populateFilterCatOptions(){
   const sel=$("#filterCat");
+  const cats=brainCats();
+  if(brainFilterCat && !cats.includes(brainFilterCat)) brainFilterCat="";  // filter zelf ook wissen, niet alleen de select-weergave
   sel.innerHTML='<option value="">Categorie: alles</option>'
-    +brainCats().map(c=>'<option value="'+esc(c)+'">'+esc(catLabel(c))+'</option>').join("");
+    +cats.map(c=>'<option value="'+esc(c)+'">'+esc(catLabel(c))+'</option>').join("");
   sel.value=brainFilterCat;
 }
-$("#filterType").addEventListener("change",e=>{ brainFilterType=e.target.value; renderBrain(); });
-$("#filterCat").addEventListener("change",e=>{ brainFilterCat=e.target.value; renderBrain(); });
-$("#filterPrio").addEventListener("change",e=>{ brainFilterPrio=e.target.value; renderBrain(); });
-$("#filterDuur").addEventListener("change",e=>{ brainFilterDuur=e.target.value; renderBrain(); });
+function clearBrainAiAnswer(){ $("#brainAiAnswer").style.display="none"; $("#brainAiCands").innerHTML=""; }
+$("#filterType").addEventListener("change",e=>{ brainFilterType=e.target.value; clearBrainAiAnswer(); renderBrain(); });
+$("#filterCat").addEventListener("change",e=>{ brainFilterCat=e.target.value; clearBrainAiAnswer(); renderBrain(); });
+$("#filterPrio").addEventListener("change",e=>{ brainFilterPrio=e.target.value; clearBrainAiAnswer(); renderBrain(); });
+$("#filterDuur").addEventListener("change",e=>{ brainFilterDuur=e.target.value; clearBrainAiAnswer(); renderBrain(); });
 /* zelfde grenzen als TIJDSDUUR_STEPS, zodat custom duren (bv. 20 of 45 min) in de
    dichtstbijzijnde bucket vallen i.p.v. nooit te matchen op een exacte waarde */
 function minutesInDuurBucket(minutes, bucketValue){
